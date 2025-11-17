@@ -15,17 +15,6 @@ runs:
         wget --output-document=$(pwd)/lint-go-version https://sc-devtools.s3.eu-west-1.amazonaws.com/golang-ci/lint-go-version
         bash $(pwd)/lint-go-version
 
-    # Cache Go builds to speedup Go linter execution
-    - id: golangci-lint-cache-paths
-      shell: bash
-      run: |
-        echo "::set-output name=golangci-lint::$HOME/.cache/golangci-lint"
-    - name: Go Build Cache
-      uses: actions/cache@v4
-      with:
-        path: ${{ steps.golangci-lint-cache-paths.outputs.golangci-lint }}
-        key: ${{ runner.os }}-golangci-lint-${{ hashFiles('**/go.sum') }}
-
     # Execute golangci-lint
     - shell: bash
       run: wget --output-document=$(pwd)/.golangci.yml https://sc-devtools.s3.eu-west-1.amazonaws.com/golang-ci/golangci.yml
