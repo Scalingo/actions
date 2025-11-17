@@ -21,12 +21,6 @@ jobs:
     if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-24.04
     steps:
-      # Checkout the current repository
-      - uses: actions/checkout@v5
-        with:
-          # We need to define the fetch-depth to 0 so that we can get the commit ID of the master branch
-          fetch-depth: 0
-
       # Checkout the GitHub Action
       - uses: actions/checkout@v5
         with:

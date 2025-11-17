@@ -4,6 +4,11 @@ description: "Execute the Scalingo Go unit tests in a GitHub Action"
 runs:
   using: "composite"
   steps:
+    - uses: actions/checkout@v5
+      with:
+        repository: ${{ github.repository }}
+        ref: ${{ github.ref }}
+
     - uses: actions/setup-go@v6
       with:
         go-version-file: "go.mod"
