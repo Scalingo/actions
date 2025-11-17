@@ -4,11 +4,11 @@ This repository contains all the GitHub actions of the Scalingo organisation. Ea
 
 ## Go Continuous Integration
 
-### How To Use This Action in a Private Repository
+### How To Use These Actions in a Private Repository
 
 See how it's used in the [go-project-template](https://github.com/Scalingo/go-project-template/blob/master/.github/workflows/ci.yml).
 
-### How To Use This Action in a Public Repository
+### How To Use These Actions in a Public Repository
 
 In order to use one of these actions in a public repository, one must first clone this repository. Then it can be used like a local composite action.
 
