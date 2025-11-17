@@ -9,17 +9,6 @@ runs:
         go-version-file: "go.mod"
         check-latest: true
 
-    # Cache go build cache, used to speedup go test
-    - id: go-cache-paths
-      shell: bash
-      run: |
-        echo "::set-output name=go-build::$(go env GOCACHE)"
-    - name: Go Build Cache
-      uses: actions/cache@v4
-      with:
-        path: ${{ steps.go-cache-paths.outputs.go-build }}
-        key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
-
     # Execute the unit tests
     - shell: bash
       run: |
