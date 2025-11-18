@@ -1,6 +1,12 @@
 name: "Scalingo Go unit tests GitHub Action"
 description: "Execute the Scalingo Go unit tests in a GitHub Action"
 
+inputs:
+  mongodb:
+    description: "Start a MongoDB if needed. Possible values: true | false | auto"
+    required: false
+    default: "auto"
+
 runs:
   using: "composite"
   steps:
@@ -14,8 +20,22 @@ runs:
         go-version-file: "go.mod"
         check-latest: true
 
+    - name: Determine if MongoDB is needed
+      id: mongodb_check
+      shell: bash
+      run: ${GITHUB_ACTION_PATH}/scripts/mongodb-check.sh >> $GITHUB_OUTPUT
+      env:
+        WITH_MONGODB: "${{ inputs.mongodb }}"
+
+    - name: "Start a MongoDB container"
+      if: ${{ steps.mongodb_check.outputs.should_start == 'true' }}
+      shell: bash
+      run: ${GITHUB_ACTION_PATH}/scripts/mongodb-start.sh
+
     # Execute the unit tests
     - shell: bash
       run: |
         test -f .env.test && cat .env.test >> "$GITHUB_ENV" || true
         go test -race ./...
+      env:
+        MONGO_URL: "mongodb://admin:admin@localhost:27017/mydb?connect=direct"
