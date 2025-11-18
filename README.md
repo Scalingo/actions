@@ -4,30 +4,4 @@ This repository contains all the GitHub actions of the Scalingo organisation. Ea
 
 ## Go Continuous Integration
 
-### How To Use These Actions in a Private Repository
-
 See how it's used in the [go-project-template](https://github.com/Scalingo/go-project-template/blob/master/.github/workflows/ci.yml).
-
-### How To Use These Actions in a Public Repository
-
-In order to use one of these actions in a public repository, one must first clone this repository. Then it can be used like a local composite action.
-
-Add the GitHub token in your GitHub Action secrets. In the repository: "Settings" -> "Secrets and variables" -> "Actions" -> "New repository secret". Name it `TOKEN`. This token must have the permissions to read the GitHub Action repository.
-
-```yml
-jobs:
-  linter:
-    name: Linter on a PR
-    if: ${{ github.event_name == 'pull_request' }}
-    runs-on: ubuntu-24.04
-    steps:
-      # Checkout the GitHub Action
-      - uses: actions/checkout@v5
-        with:
-          repository: Scalingo/actions
-          ref: main
-          path: github-actions
-          token: ${{ secrets.TOKEN }}
-
-      - uses: ./github-actions/go-linter
-```
