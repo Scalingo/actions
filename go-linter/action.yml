@@ -1,0 +1,34 @@
+name: "Scalingo Go linter GitHub Action"
+description: "Execute the Scalingo Go linter in a GitHub Action"
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v5
+      with:
+        # We need to define the fetch-depth to 0 so that we can get the commit ID of the master branch
+        fetch-depth: 0
+        repository: ${{ github.repository }}
+        ref: ${{ github.ref }}
+
+    - uses: actions/setup-go@v6
+      with:
+        go-version-file: "go.mod"
+        check-latest: true
+
+    # Execute the `lint-go-version` script
+    - shell: bash
+      run: |
+        wget --output-document=$(pwd)/lint-go-version https://sc-devtools.s3.eu-west-1.amazonaws.com/golang-ci/lint-go-version
+        bash $(pwd)/lint-go-version
+
+    # Execute golangci-lint
+    - shell: bash
+      run: wget --output-document=$(pwd)/.golangci.yml https://sc-devtools.s3.eu-west-1.amazonaws.com/golang-ci/golangci.yml
+    - name: "Execute golangci-lint on a pull request"
+      uses: Scalingo/golangci-lint-action@v8
+      with:
+        # The `only-new-issues` flag is not working (https://github.com/golangci/golangci-lint-action/issues/531).
+        # We rather decided to use the suggestion from the FAQ (https://golangci-lint.run/docs/welcome/faq/#how-to-integrate-golangci-lint-into-a-large-project-with-thousands-of-issues) and use `--new-from-rev`
+        # only-new-issues: false
+        args: "--config=$(pwd)/.golangci.yml --new-from-rev=${{ github.event.pull_request.base.sha }}"

@@ -1,0 +1,21 @@
+name: "Scalingo Go unit tests GitHub Action"
+description: "Execute the Scalingo Go unit tests in a GitHub Action"
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v5
+      with:
+        repository: ${{ github.repository }}
+        ref: ${{ github.ref }}
+
+    - uses: actions/setup-go@v6
+      with:
+        go-version-file: "go.mod"
+        check-latest: true
+
+    # Execute the unit tests
+    - shell: bash
+      run: |
+        test -f .env.test && cat .env.test >> "$GITHUB_ENV" || true
+        go test -race ./...
