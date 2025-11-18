@@ -1,6 +1,12 @@
 name: "Scalingo Go linter GitHub Action"
 description: "Execute the Scalingo Go linter in a GitHub Action"
 
+inputs:
+  sqlc:
+    description: "Install sqlc if needed. Possible values: true | false | auto"
+    required: false
+    default: "auto"
+
 runs:
   using: "composite"
   steps:
@@ -21,6 +27,22 @@ runs:
       run: |
         wget --output-document=$(pwd)/lint-go-version https://sc-devtools.s3.eu-west-1.amazonaws.com/golang-ci/lint-go-version
         bash $(pwd)/lint-go-version
+
+    - name: Determine if sqlc is needed
+      id: sqlc_check
+      shell: bash
+      run: ${GITHUB_ACTION_PATH}/scripts/sqlc-check.sh >> $GITHUB_OUTPUT
+      env:
+        WITH_SQLC: "${{ inputs.sqlc }}"
+
+    - name: "Check sqlc diff"
+      if: ${{ steps.sqlc_check.outputs.configuration_file != '' }}
+      shell: bash
+      run: |
+        go install "github.com/sqlc-dev/sqlc/cmd/sqlc@latest"
+        sqlc diff --file $SQLC_CONFIGURATION_FILE
+      env:
+        SQLC_CONFIGURATION_FILE: "${{ steps.sqlc_check.outputs.configuration_file }}"
 
     # Execute golangci-lint
     - shell: bash
