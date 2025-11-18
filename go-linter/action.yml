@@ -25,10 +25,18 @@ runs:
     # Execute golangci-lint
     - shell: bash
       run: wget --output-document=$(pwd)/.golangci.yml https://sc-devtools.s3.eu-west-1.amazonaws.com/golang-ci/golangci.yml
+    # Some projects have no vendor directory (mostly because they are actually a library)
+    - name: "Configure modules download mode"
+      shell: bash
+      id: check_vendor
+      run: |
+        if [[ ! -d vendor ]]; then
+          echo "modules_download_mode=--modules-download-mode=mod" >> $GITHUB_OUTPUT
+        fi
     - name: "Execute golangci-lint on a pull request"
       uses: Scalingo/golangci-lint-action@v8
       with:
         # The `only-new-issues` flag is not working (https://github.com/golangci/golangci-lint-action/issues/531).
         # We rather decided to use the suggestion from the FAQ (https://golangci-lint.run/docs/welcome/faq/#how-to-integrate-golangci-lint-into-a-large-project-with-thousands-of-issues) and use `--new-from-rev`
         # only-new-issues: false
-        args: "--config=$(pwd)/.golangci.yml --new-from-rev=${{ github.event.pull_request.base.sha }}"
+        args: "--config=$(pwd)/.golangci.yml --new-from-rev=${{ github.event.pull_request.base.sha }} ${{ steps.check_vendor.outputs.modules_download_mode }}"
