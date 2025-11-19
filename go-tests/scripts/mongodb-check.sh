@@ -26,7 +26,8 @@ if [[ "$WITH_MONGODB" == "false" ]]; then
   exit 0
 fi
 
-if go list -mod=readonly -m -f '{{if not .Indirect}}{{.Path}}{{end}}' all | grep "github.com/Scalingo/go-utils/mongo" > /dev/null; then
+# Check if `github.com/Scalingo/go-utils/mongo` is used in the `go.mod`
+if grep "github.com/Scalingo/go-utils/mongo v" go.mod | grep -v "// indirect" > /dev/null; then
   echo "should_start=true"
   exit 0
 fi
