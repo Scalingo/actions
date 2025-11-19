@@ -10,6 +10,10 @@ inputs:
     description: "Start etcd if needed"
     required: false
     default: "false"
+  redis:
+    description: "Start Redis if needed"
+    required: false
+    default: "false"
 
 runs:
   using: "composite"
@@ -40,6 +44,11 @@ runs:
       if: ${{ inputs.etcd == 'true' }}
       shell: bash
       run: ${GITHUB_ACTION_PATH}/scripts/etcd-start.sh
+
+    - name: "Start a Redis container"
+      if: ${{ inputs.redis == 'true' }}
+      shell: bash
+      run: ${GITHUB_ACTION_PATH}/scripts/redis-start.sh
 
     # Only execute this step if the repository contains the extra setup script
     - name: "Execute the extra setup step"
