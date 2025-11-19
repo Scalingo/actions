@@ -57,7 +57,10 @@ runs:
       run: bin/scalingo-ci-extra-setup.sh
 
     # Execute the unit tests
-    - shell: bash
-      run: |
-        test -f .env.test && cat .env.test >> "$GITHUB_ENV" || true
-        go test -race ./...
+    - name: "Export .env.test environment variables into the GitHub Action environment"
+      shell: bash
+      run: test -f .env.test && cat .env.test >> "$GITHUB_ENV" || true
+
+    - name: "Execute Go unit tests"
+      shell: bash
+      run: go test -race ./...
