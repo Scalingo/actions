@@ -47,4 +47,4 @@ runs:
         test -f .env.test && cat .env.test >> "$GITHUB_ENV" || true
         go test -race ./...
       env:
-        MONGO_URL: "mongodb://admin:admin@localhost:27017/mydb?connect=direct"
+        MONGO_URL: "mongodb://admin:admin@localhost:27017/mydb?connect=direct&authSource=admin"
