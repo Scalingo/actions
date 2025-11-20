@@ -3,12 +3,20 @@
 # Start a MongoDB database in a Docker container, and wait for the database to be ping-able.
 #
 
+mongodb_version="4.0.28"
+username="admin"
+password="admin"
+database="mydb"
+
 docker run --quiet --detach --rm --name mongodb \
   --publish 27017:27017 \
-  --env MONGO_INITDB_ROOT_USERNAME=admin \
-  --env MONGO_INITDB_ROOT_PASSWORD=admin \
-  --env MONGO_INITDB_DATABASE=mydb \
-  mongo:4.0.28 > /dev/null
+  --env "MONGO_INITDB_ROOT_USERNAME=$username" \
+  --env "MONGO_INITDB_ROOT_PASSWORD=$password" \
+  --env "MONGO_INITDB_DATABASE=$database" \
+  "mongo:$mongodb_version" > /dev/null
+
+connection_string="mongodb://${username}:${password}@localhost:27017/$database?connect=direct&authSource=admin"
+echo "MONGO_URL=$connection_string" >> "$GITHUB_ENV"
 
 echo -n "Waiting for MongoDB..."
 for _ in {1..30}; do
