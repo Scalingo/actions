@@ -27,3 +27,9 @@ jobs:
 ```
 
 The calling repository can customize the unit tests environment by adding a script `bin/scalingo-ci-extra-setup.sh` that is executed before the unit tests execution.
+
+## Automatically Merge Dependabot Pull Requests
+
+GitHub action to automatically merge the Dependabot PRs. It merges the dependency upgrade if it upgrades a minor or patch version.
+
+See how it's used in the [go-project-template](https://github.com/Scalingo/go-project-template/blob/master/.github/workflows/dependabot.yml).
