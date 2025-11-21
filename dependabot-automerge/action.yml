@@ -1,0 +1,31 @@
+name: "Dependabot Automerge"
+description: "Automate the merge of Dependabot PRs"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Fetch Dependabot PRs metadata
+      id: dependabot-metadata
+      uses: dependabot/fetch-metadata@v2
+      if: github.actor == 'dependabot[bot]'
+      with:
+        github-token: "${{ env.GITHUB_TOKEN }}"
+    - name: Enable auto-merge for Dependabot PRs
+      if: github.actor == 'dependabot[bot]'
+      run: gh pr merge --auto --merge "$PR_URL"
+      shell: bash
+      env:
+        PR_URL: ${{github.event.pull_request.html_url}}
+        GITHUB_TOKEN: ${{env.GITHUB_TOKEN}}
+    - name: Approve Dependabot PRs
+      if: |
+        github.actor == 'dependabot[bot]'
+        && (
+          steps.dependabot-metadata.outputs.update-type == 'version-update:semver-minor'
+          || steps.dependabot-metadata.outputs.update-type == 'version-update:semver-patch'
+        )
+      run: gh pr review --approve "$PR_URL"
+      shell: bash
+      env:
+        PR_URL: ${{github.event.pull_request.html_url}}
+        GITHUB_TOKEN: ${{env.GITHUB_TOKEN}}
