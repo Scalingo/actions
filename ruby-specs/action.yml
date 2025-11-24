@@ -1,0 +1,130 @@
+name: "Scalingo Ruby Specs GitHub Action"
+description: "Execute Ruby specs with code coverage in a GitHub Action"
+
+inputs:
+  mongodb:
+    description: "Start MongoDB if needed. Possible values: true | false | auto"
+    required: false
+    default: "auto"
+  redis:
+    description: "Start Redis if needed. Possible values: true | false | auto"
+    required: false
+    default: "auto"
+  pact:
+    description: "Run Pact verification tests. Possible values: true | false | auto"
+    required: false
+    default: "auto"
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v4
+
+    - uses: ruby/setup-ruby@v1
+      with:
+        bundler-cache: true
+
+    - name: Determine if MongoDB is needed
+      id: mongodb_check
+      shell: bash
+      run: ${GITHUB_ACTION_PATH}/scripts/mongodb-check.sh >> $GITHUB_OUTPUT
+      env:
+        WITH_MONGODB: "${{ inputs.mongodb }}"
+
+    - name: "Start MongoDB container"
+      if: ${{ steps.mongodb_check.outputs.should_start == 'true' }}
+      shell: bash
+      run: ${GITHUB_ACTION_PATH}/scripts/mongodb-start.sh
+
+    - name: Determine if Redis is needed
+      id: redis_check
+      shell: bash
+      run: ${GITHUB_ACTION_PATH}/scripts/redis-check.sh >> $GITHUB_OUTPUT
+      env:
+        WITH_REDIS: "${{ inputs.redis }}"
+
+    - name: "Start Redis container"
+      if: ${{ steps.redis_check.outputs.should_start == 'true' }}
+      shell: bash
+      run: ${GITHUB_ACTION_PATH}/scripts/redis-start.sh
+
+    - name: Prepare test database
+      shell: bash
+      run: |
+        if bundle exec rake --tasks | grep --quiet "db:test:prepare"; then
+          bundle exec rake db:test:prepare
+        fi
+        if bundle exec rake --tasks | grep --quiet "spec:prepare"; then
+          bundle exec rake spec:prepare
+        fi
+      env:
+        RAILS_ENV: test
+        RACK_ENV: test
+        COVERAGE: true
+
+    - name: Run RSpec
+      shell: bash
+      run: bundle exec rspec
+      env:
+        RAILS_ENV: test
+        RACK_ENV: test
+        COVERAGE: true
+
+    - name: Determine if Pact is needed
+      id: pact_check
+      shell: bash
+      run: ${GITHUB_ACTION_PATH}/scripts/pact-check.sh >> $GITHUB_OUTPUT
+      env:
+        WITH_PACT: "${{ inputs.pact }}"
+
+    - name: Run Pact verification
+      if: ${{ steps.pact_check.outputs.should_run == 'true' }}
+      shell: bash
+      run: bundle exec rake pact:verify
+      env:
+        RAILS_ENV: test
+        RACK_ENV: test
+
+    - name: Upload SimpleCov Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: coverage/
+
+    - name: Generate Code Coverage Summary
+      shell: bash
+      run: |
+        if [ -f coverage/.last_run.json ]; then
+          LINE_COVERAGE=$(jq '.result.line' coverage/.last_run.json)
+          BRANCH_COVERAGE=$(jq '.result.branch' coverage/.last_run.json)
+          echo "## Code Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          echo "Line Coverage: $LINE_COVERAGE%" >> $GITHUB_STEP_SUMMARY
+          echo "Branch Coverage: $BRANCH_COVERAGE%" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "No coverage report found."
+        fi
+
+    - name: Set GitHub Status Check
+      shell: bash
+      run: |
+        if [ -f coverage/.last_run.json ]; then
+          LINE_COVERAGE=$(jq '.result.line' coverage/.last_run.json)
+          BRANCH_COVERAGE=$(jq '.result.branch' coverage/.last_run.json)
+          PAYLOAD=$(jq -n \
+            --arg state "success" \
+            --arg context "Coverage Report" \
+            --arg description "Line: ${LINE_COVERAGE}% | Branch: ${BRANCH_COVERAGE}%" \
+            --arg target_url "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            '{
+              state: $state,
+              context: $context,
+              description: $description,
+              target_url: $target_url
+            }')
+          curl -X POST -H "Authorization: token ${{ github.token }}" \
+                -H "Accept: application/vnd.github.v3+json" \
+                https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.sha }} \
+                -d "$PAYLOAD"
+        else
+          echo "No coverage report found."
+        fi
