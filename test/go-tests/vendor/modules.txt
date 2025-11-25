@@ -1,0 +1,25 @@
+# github.com/Scalingo/go-utils/logger v1.11.0
+## explicit; go 1.24.0
+github.com/Scalingo/go-utils/logger
+# github.com/Scalingo/go-utils/mongo v1.5.1
+## explicit; go 1.24
+github.com/Scalingo/go-utils/mongo
+# github.com/kr/text v0.2.0
+## explicit
+# github.com/pkg/errors v0.9.1
+## explicit
+github.com/pkg/errors
+# github.com/sirupsen/logrus v1.9.3
+## explicit; go 1.13
+github.com/sirupsen/logrus
+# golang.org/x/sys v0.38.0
+## explicit; go 1.24.0
+golang.org/x/sys/unix
+golang.org/x/sys/windows
+# gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
+## explicit
+gopkg.in/mgo.v2
+gopkg.in/mgo.v2/bson
+gopkg.in/mgo.v2/internal/json
+gopkg.in/mgo.v2/internal/sasl
+gopkg.in/mgo.v2/internal/scram

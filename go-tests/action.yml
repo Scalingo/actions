@@ -19,6 +19,8 @@ runs:
   using: "composite"
   steps:
     - uses: actions/checkout@v5
+      # We skip the checkout step if the workflow is executed in the `actions` repository. This means the current actions is a test for the actions. Some of these tests require to dynamically add files to the root of the repository to prentend it's, for example, a Go repository.
+      if: ${{ github.repository != 'Scalingo/actions' }}
       with:
         repository: ${{ github.repository }}
         ref: ${{ github.ref }}

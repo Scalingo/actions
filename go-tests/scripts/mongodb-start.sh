@@ -20,7 +20,7 @@ echo "MONGO_URL=$connection_string" >> "$GITHUB_ENV"
 
 echo -n "Waiting for MongoDB..."
 for _ in {1..30}; do
-  if docker exec mongodb mongo --quiet --eval "db.runCommand({ ping: 1 })" >/dev/null 2>&1; then
+  if docker exec mongodb mongo --quiet --eval "db.runCommand({ ping: 1 })" > /dev/null 2>&1; then
     echo -e "\nMongoDB ready!"
     exit 0
   fi
