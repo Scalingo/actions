@@ -28,6 +28,12 @@ runs:
         go-version-file: "go.mod"
         check-latest: true
 
+    - name: "Set tests specific environment variables into the GitHub Action environment"
+      shell: bash
+      run: |
+        echo "TMPDIR=${RUNNER_TEMP}" >> $GITHUB_ENV
+        test -f .env.test && cat .env.test >> "$GITHUB_ENV" || true
+
     - name: Determine if MongoDB is needed
       id: mongodb_check
       shell: bash
@@ -57,12 +63,6 @@ runs:
       run: bin/scalingo-ci-extra-setup.sh
 
     # Execute the unit tests
-    - name: "Set tests specific environment variables into the GitHub Action environment"
-      shell: bash
-      run: |
-        echo "TMPDIR=${RUNNER_TEMP}" >> $GITHUB_ENV
-        test -f .env.test && cat .env.test >> "$GITHUB_ENV" || true
-
     - name: "Execute Go unit tests"
       shell: bash
       run: go test -race -timeout ${SCALINGO_GO_TIMEOUT:-10m} ./...
