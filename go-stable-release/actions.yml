@@ -4,17 +4,17 @@ description: "Create tag and stable release based on the name of the branch, pat
 ### Integration in repositories:
 #
 # name: Release to production
-# 
+#
 # on:
 #   pull_request:
 #     types: [closed]
 #     branches:
 #       - 'release/v*.*.*'   # PR base branch is a release/* branch
-# 
+#
 # permissions:
 #   contents: write          # needed to create the release
 #   deployments: write       # recommended for environment/deployment updates
-# 
+#
 # jobs:
 #   create_release:
 #     name: Create GitHub Release
@@ -46,7 +46,7 @@ runs:
         test -f .release/target_sha || { echo ".release/target_sha missing"; exit 1; }
         V=$(tr -d '[:space:]' < VERSION)
         TARGET_SHA=$(tr -d '[:space:]' < .release/target_sha)
-        echo "version=$V" >> $GITHUB_OUTPUT
+        echo "tag=v${V}" >> $GITHUB_OUTPUT
         echo "target_sha=$TARGET_SHA" >> $GITHUB_OUTPUT
 
     - name: Ensure tag does not exist
@@ -54,8 +54,8 @@ runs:
       run: |
         set -euo pipefail
         git fetch --tags
-        if git tag --list "v${{ steps.meta.outputs.version }}" | grep --quiet --line-regexp "v${{ steps.meta.outputs.version }}"; then
-          echo "❌ Tag v${{ steps.meta.outputs.version }} already exists"
+        if git tag --list "${{ steps.meta.outputs.tag }}" | grep --quiet --line-regexp "${{ steps.meta.outputs.tag }}"; then
+          echo "❌ Tag ${{ steps.meta.outputs.tag }} already exists"
           exit 1
         fi
 
@@ -63,10 +63,10 @@ runs:
       run: |
         git config user.name  "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
-        git tag --annotate "${{ steps.meta.outputs.version }}" "${{ steps.meta.outputs.target_sha }}" \
-          --message "Release ${{ steps.meta.outputs.version }}"
-        git push origin "${{ steps.meta.outputs.version }}"
-        git checkout "${{ steps.meta.outputs.version }}"
+        git tag --annotate "${{ steps.meta.outputs.tag }}" "${{ steps.meta.outputs.target_sha }}" \
+          --message "Release ${{ steps.meta.outputs.tag }}"
+        git push origin "${{ steps.meta.outputs.tag }}"
+        git checkout "${{ steps.meta.outputs.tag }}"
 
     - name: Run GoReleaser
       uses: goreleaser/goreleaser-action@v6
@@ -74,7 +74,7 @@ runs:
         version: '~> v2'
         args: release --config .goreleaser-prod.yml --clean
       env:
-        GORELEASER_CURRENT_TAG: ${{ steps.meta.outputs.version }}
+        GORELEASER_CURRENT_TAG: ${{ steps.meta.outputs.tag }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         CGO_ENABLED: 0
 
@@ -93,4 +93,3 @@ runs:
           gh api --method DELETE "/repos/$REPO/git/refs/heads/$ref" \
             || echo "Could not delete $ref (already gone or protected)."
         done
-
