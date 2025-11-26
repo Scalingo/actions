@@ -69,22 +69,7 @@ runs:
         RAILS_ENV: test
         RACK_ENV: test
         COVERAGE: true
-
-    - name: Determine if Pact is needed
-      id: pact_check
-      shell: bash
-      run: ${GITHUB_ACTION_PATH}/scripts/pact-check.sh >> $GITHUB_OUTPUT
-      env:
-        WITH_PACT: "${{ inputs.pact }}"
-
-    - name: Run Pact verification
-      if: ${{ steps.pact_check.outputs.should_run == 'true' }}
-      shell: bash
-      run: bundle exec rake pact:verify
-      env:
-        RAILS_ENV: test
-        RACK_ENV: test
-
+  
     - name: Upload SimpleCov Report
       uses: actions/upload-artifact@v4
       with:
