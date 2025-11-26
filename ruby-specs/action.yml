@@ -2,8 +2,8 @@ name: "Scalingo Ruby Specs GitHub Action"
 description: "Execute Ruby specs with code coverage in a GitHub Action"
 
 inputs:
-  ruby-version:
-    description: "Ruby version to use. If not specified, uses ruby-version from ruby/setup-ruby defaults"
+  ruby-gem-version:
+    description: "RubyGems version to use. If not specified, uses the default RubyGems version"
     required: false
   mongodb:
     description: "Start MongoDB if needed. Possible values: true | false | auto"
@@ -21,9 +21,16 @@ runs:
 
     - uses: ruby/setup-ruby@v1
       with:
-        ruby-version: ${{ inputs.ruby-version }}
         bundler-cache: true
-
+    - name: Update RubyGems if input provided
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.ruby-gem-version }}" ]; then
+          echo "Updating RubyGems to version ${{ inputs.ruby-gem-version }}"
+          gem update --system "${{ inputs.ruby-gem-version }}"
+        else
+          echo "No RubyGems version input provided, skipping update"
+        fi
     - name: Determine if MongoDB is needed
       id: mongodb_check
       shell: bash
