@@ -28,6 +28,25 @@ jobs:
 
 The calling repository can customize the unit tests environment by adding a script `bin/scalingo-ci-extra-setup.sh` that is executed before the unit tests execution.
 
+## Ruby Continuous Integration
+
+The Ruby specs GitHub action has different options that can be enabled if needed:
+- Specs:
+  - `mongodb`: run a MongoDB database so that specs can use it. An environment variable is set in the specs execution environment with the connection string. The default value is `auto`. With this value the action tries to automatically detect if MongoDB is configured on the project (by checking for the `mongoid` gem in `Gemfile.lock`). Other possible options are `true` and `false`.
+  - `redis`: run a Redis database reachable on `127.0.0.1:6379`. The default value is `auto`. With this value the action tries to automatically detect if Redis is configured on the project (by checking for the `redis` gem in `Gemfile.lock`). Other possible options are `true` and `false`.
+
+Enable one of these options with:
+
+```yml
+jobs:
+  specs:
+    # ...
+    steps:
+      - uses: Scalingo/actions/ruby-specs@main
+        with:
+          mongodb: true
+```
+
 ## Automatically Merge Dependabot Pull Requests
 
 GitHub action to automatically merge the Dependabot PRs. It merges the dependency upgrade if it upgrades a minor or patch version.
