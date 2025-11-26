@@ -2,9 +2,6 @@ name: "Scalingo Ruby Specs GitHub Action"
 description: "Execute Ruby specs with code coverage in a GitHub Action"
 
 inputs:
-  ruby-gem-version:
-    description: "RubyGems version to use. If not specified, uses the default RubyGems version"
-    required: false
   mongodb:
     description: "Start MongoDB if needed. Possible values: true | false | auto"
     required: false
