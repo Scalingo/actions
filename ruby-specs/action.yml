@@ -22,15 +22,7 @@ runs:
     - uses: ruby/setup-ruby@v1
       with:
         bundler-cache: true
-    - name: Update RubyGems if input provided
-      shell: bash
-      run: |
-        if [ -n "${{ inputs.ruby-gem-version }}" ]; then
-          echo "Updating RubyGems to version ${{ inputs.ruby-gem-version }}"
-          gem update --system "${{ inputs.ruby-gem-version }}"
-        else
-          echo "No RubyGems version input provided, skipping update"
-        fi
+
     - name: Determine if MongoDB is needed
       id: mongodb_check
       shell: bash
@@ -68,6 +60,10 @@ runs:
         RAILS_ENV: test
         RACK_ENV: test
         COVERAGE: true
+
+    - name: "Export .env.test environment variables into the GitHub Action environment"
+      shell: bash
+      run: test -f .env.test && cat .env.test >> "$GITHUB_ENV" || true
 
     - name: Run RSpec
       shell: bash
