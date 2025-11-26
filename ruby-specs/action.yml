@@ -13,10 +13,6 @@ inputs:
     description: "Start Redis if needed. Possible values: true | false | auto"
     required: false
     default: "auto"
-  pact:
-    description: "Run Pact verification tests. Possible values: true | false | auto"
-    required: false
-    default: "auto"
 
 runs:
   using: "composite"
