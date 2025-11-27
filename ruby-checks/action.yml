@@ -18,14 +18,15 @@ inputs:
     required: false
     default: "auto"
 
-# This environment is needed for some CI tools to run properly as it loads the project files and some of them may depend on these variables to load correctly
-env:
-  RACK_ENV: test
-  RAILS_ENV: test
-
 runs:
   using: "composite"
   steps:
+    - name: Set environment variables
+      shell: bash
+      run: |
+        echo "RACK_ENV=test" >> $GITHUB_ENV
+        echo "RAILS_ENV=test" >> $GITHUB_ENV
+
     - uses: actions/checkout@v4
 
     - uses: ruby/setup-ruby@v1
