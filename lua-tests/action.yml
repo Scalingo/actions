@@ -18,6 +18,14 @@ inputs:
     description: "Space-separated list of luarocks to install"
     required: false
     default: ""
+  luarocks-server:
+    description: "Optional luarocks server to install rocks from"
+    required: false
+    default: ""
+  luarocks-flags:
+    description: "Additional flags passed to luarocks install (applied to every rock)"
+    required: false
+    default: ""
   luarocks-tree:
     description: "Where to install luarocks (local tree)"
     required: false
@@ -82,11 +90,22 @@ runs:
       shell: bash
       env:
         LUAROCKS: ${{ inputs.luarocks }}
+        LUAROCKS_SERVER: ${{ inputs.luarocks-server }}
+        LUAROCKS_FLAGS: ${{ inputs.luarocks-flags }}
       run: |
         set -euo pipefail
         eval "$(luarocks --tree "${LUAROCKS_TREE}" path)"
         for rock in ${LUAROCKS}; do
-          luarocks --tree "${LUAROCKS_TREE}" install "${rock}"
+          INSTALL_ARGS=(--tree "${LUAROCKS_TREE}")
+          if [[ -n "${LUAROCKS_SERVER}" ]]; then
+            INSTALL_ARGS+=(--server "${LUAROCKS_SERVER}")
+          fi
+          if [[ -n "${LUAROCKS_FLAGS}" ]]; then
+            # shellcheck disable=SC2206
+            EXTRA=(${LUAROCKS_FLAGS})
+            INSTALL_ARGS+=("${EXTRA[@]}")
+          fi
+          luarocks "${INSTALL_ARGS[@]}" install "${rock}"
         done
 
     - name: "Export .env.test environment variables"
