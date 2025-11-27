@@ -46,6 +46,14 @@ jobs:
         with:
           mongodb: true
 ```
+## Go release process
+
+Two actions are present to release services which are go binaries:
+
+- [go-stable-release](/go-stable-release): Create a tag based on the name of the branch: `release/vX.Y.Z` which got merged and create a stable Release using GoReleaser
+- [go-rolling-release](/go-rolling-release): Create a tag based on the name of the latest stable tag then create a prerelease Github Release using GoReleaser
+
+Example of usage is presents in the `actions.yml` of each action
 
 ## Automatically Merge Dependabot Pull Requests
 
