@@ -18,6 +18,10 @@ inputs:
     description: "Space-separated list of luarocks to install"
     required: false
     default: ""
+  luarocks-tree:
+    description: "Where to install luarocks (local tree)"
+    required: false
+    default: "${{ runner.temp }}/luarocks"
 
 runs:
   using: "composite"
@@ -48,11 +52,26 @@ runs:
         echo "/usr/local/openresty/bin" >> $GITHUB_PATH
         echo "/usr/local/openresty/luajit/bin" >> $GITHUB_PATH
 
+    - name: Configure local luarocks tree
+      shell: bash
+      env:
+        LUAROCKS_TREE: ${{ inputs.luarocks-tree }}
+      run: |
+        set -euo pipefail
+        mkdir -p "${LUAROCKS_TREE}"
+        eval "$(luarocks --tree "${LUAROCKS_TREE}" path)"
+        echo "LUAROCKS_TREE=${LUAROCKS_TREE}" >> "${GITHUB_ENV}"
+        echo "LUA_PATH=${LUA_PATH}" >> "${GITHUB_ENV}"
+        echo "LUA_CPATH=${LUA_CPATH}" >> "${GITHUB_ENV}"
+        echo "PATH=${PATH}" >> "${GITHUB_ENV}"
+        echo "${LUAROCKS_TREE}/bin" >> "${GITHUB_PATH}"
+
     - name: Install test framework
       shell: bash
       run: |
         set -euo pipefail
-        luarocks install busted
+        eval "$(luarocks --tree "${LUAROCKS_TREE}" path)"
+        luarocks --tree "${LUAROCKS_TREE}" install busted
         # Install lua-resty-busted for OpenResty compatibility
         git clone --depth 1 https://github.com/thibaultcha/lua-resty-busted /tmp/lua-resty-busted
         sudo cp /tmp/lua-resty-busted/bin/busted /usr/local/bin/resty-busted
@@ -65,8 +84,9 @@ runs:
         LUAROCKS: ${{ inputs.luarocks }}
       run: |
         set -euo pipefail
+        eval "$(luarocks --tree "${LUAROCKS_TREE}" path)"
         for rock in ${LUAROCKS}; do
-          luarocks install "${rock}"
+          luarocks --tree "${LUAROCKS_TREE}" install "${rock}"
         done
 
     - name: "Export .env.test environment variables"
