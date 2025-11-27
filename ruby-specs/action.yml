@@ -11,11 +11,6 @@ inputs:
     required: false
     default: "auto"
 
-env:
-  RAILS_ENV: test
-  RACK_ENV: test
-  COVERAGE: true
-
 runs:
   using: "composite"
   steps:
@@ -58,6 +53,10 @@ runs:
         if bundle exec rake --tasks | grep --quiet "spec:prepare"; then
           bundle exec rake spec:prepare
         fi
+      env:
+        RAILS_ENV: test
+        RACK_ENV: test
+        COVERAGE: true
 
     - name: "Export .env.test environment variables into the GitHub Action environment"
       shell: bash
@@ -66,6 +65,10 @@ runs:
     - name: Run RSpec
       shell: bash
       run: bundle exec rspec
+      env:
+        RAILS_ENV: test
+        RACK_ENV: test
+        COVERAGE: true
 
     - name: Upload SimpleCov Report
       uses: actions/upload-artifact@v4
