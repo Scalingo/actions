@@ -60,7 +60,7 @@ runs:
 
     - name: "Export .env.test environment variables into the GitHub Action environment"
       shell: bash
-      run: test -f .env.test && cat .env.test >> "$GITHUB_ENV" || true
+      run: test -f .env.test && grep -v '^#' .env.test >> "$GITHUB_ENV" || true
 
     - name: Run RSpec
       shell: bash
