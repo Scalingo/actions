@@ -17,11 +17,6 @@ inputs:
     description: "Execute Zeitwerk check if needed. Possible values: true | false | auto"
     required: false
     default: "auto"
-  # Pact is a contract testing tool for ensuring that services can communicate with each other correctly. The Pact verification ensures that the contracts between services are valid.
-  pact:
-    description: "Execute Pact verification if needed. Possible values: true | false | auto"
-    required: false
-    default: "auto"
 
 # This environment is needed for some CI tools to run properly as it loads the project files and some of them may depend on these variables to load correctly
 env:
@@ -76,15 +71,3 @@ runs:
       if: ${{ steps.zeitwerk_check.outputs.should_run == 'true' }}
       shell: bash
       run: bundle exec rake zeitwerk:check
-
-    - name: Determine if Pact should be executed
-      id: pact_check
-      shell: bash
-      run: ${GITHUB_ACTION_PATH}/scripts/check-pact.sh >> $GITHUB_OUTPUT
-      env:
-        WITH_PACT: "${{ inputs.pact }}"
-
-    - name: Pact
-      if: ${{ steps.pact_check.outputs.should_run == 'true' }}
-      shell: bash
-      run: bundle exec rake pact:verify
