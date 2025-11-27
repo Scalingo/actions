@@ -26,8 +26,8 @@ if [[ "$WITH_REDIS" == "false" ]]; then
   exit 0
 fi
 
-# Check if `redis` gem is used in the Gemfile.lock
-if grep --quiet "^\s*redis\s*(" Gemfile.lock 2>/dev/null; then
+# Check if `redis` gem is used in the Gemfile
+if grep --quiet "redis" Gemfile 2>/dev/null; then
   echo "should_start=true"
   exit 0
 fi

@@ -10,6 +10,12 @@ inputs:
     description: "Start Redis if needed. Possible values: true | false | auto"
     required: false
     default: "auto"
+  # Pact is a contract testing tool for ensuring that services can communicate with each other correctly. 
+  # The Pact verification ensures that the contracts between services are valid.
+  pact:
+    description: "Execute Pact verification if needed. Possible values: true | false | auto"
+    required: false
+    default: "auto"
 
 env:
   RAILS_ENV: test
@@ -19,7 +25,7 @@ env:
 runs:
   using: "composite"
   steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - uses: ruby/setup-ruby@v1
       with:
@@ -63,12 +69,24 @@ runs:
       shell: bash
       run: test -f .env.test && grep -v '^#' .env.test >> "$GITHUB_ENV" || true
 
+    - name: Determine if Pact should be executed
+      id: pact_check
+      shell: bash
+      run: ${GITHUB_ACTION_PATH}/scripts/check-pact.sh >> $GITHUB_OUTPUT
+      env:
+        WITH_PACT: "${{ inputs.pact }}"
+
+    - name: Pact
+      if: ${{ steps.pact_check.outputs.should_run == 'true' }}
+      shell: bash
+      run: bundle exec rake pact:verify
+
     - name: Run RSpec
       shell: bash
       run: bundle exec rspec
 
     - name: Upload SimpleCov Report
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: coverage-report
         path: coverage/
@@ -103,10 +121,10 @@ runs:
               description: $description,
               target_url: $target_url
             }')
-          curl -X POST -H "Authorization: token ${{ github.token }}" \
-                -H "Accept: application/vnd.github.v3+json" \
-                https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.sha }} \
-                -d "$PAYLOAD"
+          gh api \
+          --method POST \
+          repos/${{ github.repository }}/statuses/${{ github.sha }} \
+          --input - <<< "$PAYLOAD"
         else
           echo "No coverage report found."
         fi
