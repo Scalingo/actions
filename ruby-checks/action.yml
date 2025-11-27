@@ -2,26 +2,31 @@ name: "Scalingo Ruby Specs GitHub Action"
 description: "Execute Ruby specs with code coverage in a GitHub Action"
 
 inputs:
+  # Rubocop is a linter for Ruby code
   rubocop:
     description: "Execute RuboCop if needed. Possible values: true | false | auto"
     required: false
     default: "auto"
+  # Brakeman is a static analysis security vulnerability scanner for Ruby on Rails applications
   brakeman:
     description: "Execute Brakeman if needed. Possible values: true | false | auto"
     required: false
     default: "auto"
+  # Zeitwerk is a code loader for Ruby applications. The Zeitwerk check ensures that the code will be loaded correctly at runtime.
   zeitwerk:
     description: "Execute Zeitwerk check if needed. Possible values: true | false | auto"
     required: false
     default: "auto"
+  # Pact is a contract testing tool for ensuring that services can communicate with each other correctly. The Pact verification ensures that the contracts between services are valid.
   pact:
     description: "Execute Pact verification if needed. Possible values: true | false | auto"
     required: false
     default: "auto"
 
+# This environment is needed for some CI tools to run properly as it loads the project files and some of them may depend on these variables to load correctly
 env:
-  RAILS_ENV: test
   RACK_ENV: test
+  RAILS_ENV: test
 
 runs:
   using: "composite"
@@ -71,10 +76,6 @@ runs:
       if: ${{ steps.zeitwerk_check.outputs.should_run == 'true' }}
       shell: bash
       run: bundle exec rake zeitwerk:check
-      # This environment is needed for Zeitwerk check to run properly as it loads the project files and some of them may depend on these variables to load correctly
-      env:
-        RACK_ENV: test
-        RAILS_ENV: test
 
     - name: Determine if Pact should be executed
       id: pact_check
