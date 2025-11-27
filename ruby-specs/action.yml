@@ -16,15 +16,20 @@ inputs:
     description: "Execute Pact verification if needed. Possible values: true | false | auto"
     required: false
     default: "auto"
-
-env:
-  RAILS_ENV: test
-  RACK_ENV: test
-  COVERAGE: true
+  github_token:
+    description: "GitHub token for API access. It is used to upload code coverage status."
+    required: false
 
 runs:
   using: "composite"
   steps:
+    - name: Set environment variables
+      shell: bash
+      run: |
+        echo "RAILS_ENV=test" >> $GITHUB_ENV
+        echo "RACK_ENV=test" >> $GITHUB_ENV
+        echo "COVERAGE=true" >> $GITHUB_ENV
+
     - uses: actions/checkout@v6
 
     - uses: ruby/setup-ruby@v1
@@ -39,7 +44,7 @@ runs:
         WITH_MONGODB: "${{ inputs.mongodb }}"
 
     - name: "Start MongoDB container"
-      if: ${{ steps.mongodb_check.outputs.should_start == 'true' }}
+      if: ${{ steps.mongodb_check.outputs.should_run == 'true' }}
       shell: bash
       run: ${GITHUB_ACTION_PATH}/scripts/mongodb-start.sh
 
@@ -51,7 +56,7 @@ runs:
         WITH_REDIS: "${{ inputs.redis }}"
 
     - name: "Start Redis container"
-      if: ${{ steps.redis_check.outputs.should_start == 'true' }}
+      if: ${{ steps.redis_check.outputs.should_run == 'true' }}
       shell: bash
       run: ${GITHUB_ACTION_PATH}/scripts/redis-start.sh
 
@@ -107,7 +112,7 @@ runs:
     - name: Set GitHub Status Check
       shell: bash
       run: |
-        if [ -f coverage/.last_run.json ]; then
+        if [ -n "${{ inputs.github_token }}" ] && [ -f coverage/.last_run.json ]; then
           LINE_COVERAGE=$(jq '.result.line' coverage/.last_run.json)
           BRANCH_COVERAGE=$(jq '.result.branch' coverage/.last_run.json)
           PAYLOAD=$(jq -n \
@@ -128,3 +133,5 @@ runs:
         else
           echo "No coverage report found."
         fi
+      env:
+        GH_TOKEN: ${{ inputs.github_token }}
