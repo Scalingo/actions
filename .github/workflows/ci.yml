@@ -1,0 +1,60 @@
+name: Tests for Scalingo Actions
+
+on:
+  pull_request:
+  push:
+    branches: [main, master, prod]
+
+jobs:
+  go-tests-without-databases:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup the tests
+        run: ./test/go-tests/setup.sh
+
+      - name: Run Go tests action
+        id: gotests
+        uses: ./go-tests
+        with:
+          etcd: false
+          mongodb: false
+          redis: false
+
+      - name: Test the Go tests action
+        run: ./test/go-tests/execution.sh without-databases
+
+  go-tests-with-databases:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup the tests
+        run: ./test/go-tests/setup.sh
+
+      - name: Run Go tests action
+        id: gotests
+        uses: ./go-tests
+        with:
+          etcd: true
+          mongodb: true
+          redis: true
+
+      - name: Test the Go tests action
+        run: ./test/go-tests/execution.sh with-databases
+
+  go-tests-mongodb-auto:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup the tests
+        run: ./test/go-tests/setup.sh
+
+      - name: Run Go tests action
+        id: gotests
+        uses: ./go-tests
+
+      - name: Test the Go tests action
+        run: ./test/go-tests/execution.sh mongodb-auto

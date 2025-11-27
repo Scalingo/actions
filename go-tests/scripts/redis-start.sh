@@ -9,7 +9,7 @@ docker run --quiet --detach --rm --name redis \
 
 echo -n "Waiting for Redis..."
 for _ in {1..30}; do
-  if docker exec redis redis-cli PING >/dev/null 2>&1; then
+  if docker exec redis redis-cli PING > /dev/null 2>&1; then
     echo -e "\nRedis is ready!"
     exit 0
   fi
