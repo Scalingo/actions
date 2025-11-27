@@ -1,27 +1,35 @@
 name: "Scalingo Lua linter GitHub Action"
-description: "Lint Lua codebases with lua-language-server"
+description: "Lint Lua codebases with luacheck"
 
 inputs:
   path:
-    description: "Path passed to lua-language-server --check"
+    description: "Working directory for the linter"
     required: false
     default: "."
   base-ref:
     description: "Base ref/branch/sha to diff against (defaults to PR base, then main/master, then HEAD~1)"
     required: false
     default: ""
-  checklevel:
-    description: "lua-language-server check level"
-    required: false
-    default: "Hint"
   lua-path:
     description: "Value to export as LUA_PATH before linting"
     required: false
     default: ""
-  lua-language-server-version:
-    description: "Version of lua-language-server to install"
+  luacheck-version:
+    description: "Version of luacheck to install (empty for latest available on luarocks)"
     required: false
-    default: "3.15.0"
+    default: ""
+  lua-version:
+    description: "Lua version to use with luacheck (passed to luarocks --lua-version)"
+    required: false
+    default: "5.1"
+  checklevel:
+    description: "Deprecated: kept for backward compatibility; no effect"
+    required: false
+    default: ""
+  lua-language-server-version:
+    description: "Deprecated: kept for backward compatibility; no effect"
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -32,17 +40,18 @@ runs:
         repository: ${{ github.repository }}
         ref: ${{ github.ref }}
 
-    - name: Restore lua-language-server cache
+    - name: Restore luacheck cache
       uses: actions/cache@v4
       with:
-        path: ~/.cache/lua-language-server
-        key: lua-language-server-${{ runner.os }}-${{ inputs.lua-language-server-version }}
+        path: ~/.cache/luacheck
+        key: luacheck-${{ runner.os }}-${{ inputs.luacheck-version }}
 
-    - name: Install lua-language-server
+    - name: Install luacheck
       shell: bash
       env:
-        LUALS_VERSION: ${{ inputs.lua-language-server-version }}
-      run: bash "${GITHUB_ACTION_PATH}/scripts/install-lua-language-server.sh"
+        LUACHECK_VERSION: ${{ inputs.luacheck-version }}
+        LUACHECK_LUA_VERSION: ${{ inputs.lua-version }}
+      run: bash "${GITHUB_ACTION_PATH}/scripts/install-luacheck.sh"
 
     - name: Determine changed Lua files
       id: files
@@ -95,18 +104,17 @@ runs:
       working-directory: ${{ inputs.path }}
       env:
         LUA_PATH: ${{ inputs.lua-path }}
-        CHECKLEVEL: ${{ inputs.checklevel }}
         FILE_LIST: ${{ steps.files.outputs.file_list }}
       run: |
         set -euo pipefail
-        LUALS_BIN="${HOME}/.cache/lua-language-server/bin/lua-language-server"
+        export PATH="${HOME}/.cache/luacheck/bin:${PATH}"
+        mapfile -t FILES < "${FILE_LIST}"
         if [[ -n "${LUA_PATH}" ]]; then
           echo "Using LUA_PATH=${LUA_PATH}"
         fi
-        if [[ ! -x "${LUALS_BIN}" ]]; then
-          echo "lua-language-server binary not found at ${LUALS_BIN}"
+        if ! command -v luacheck >/dev/null 2>&1; then
+          echo "luacheck binary not found in PATH"
           exit 1
         fi
-        mapfile -t FILES < "${FILE_LIST}"
-        # lua-language-server accepts a list of files to check
-        "${LUALS_BIN}" --check "${FILES[@]}" --checklevel="${CHECKLEVEL}"
+        luacheck --version
+        luacheck "${FILES[@]}"

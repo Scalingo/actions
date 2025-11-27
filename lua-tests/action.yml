@@ -1,0 +1,90 @@
+name: "Scalingo Lua tests GitHub Action"
+description: "Run Lua/OpenResty test suites with busted"
+
+inputs:
+  openresty-version:
+    description: "OpenResty version to install (apt package)"
+    required: false
+    default: "1.27.1.1"
+  working-directory:
+    description: "Directory to run tests from"
+    required: false
+    default: "."
+  command:
+    description: "Command to run tests"
+    required: false
+    default: "bin/specs"
+  luarocks:
+    description: "Space-separated list of luarocks to install"
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v5
+      if: ${{ github.repository != 'Scalingo/actions' }}
+      with:
+        repository: ${{ github.repository }}
+        ref: ${{ github.ref }}
+
+    - name: Install OpenResty from apt
+      shell: bash
+      env:
+        OPENRESTY_VERSION: ${{ inputs.openresty-version }}
+      run: |
+        set -euo pipefail
+        # Add OpenResty GPG key and repository
+        wget -qO - https://openresty.org/package/pubkey.gpg | sudo gpg --dearmor -o /usr/share/keyrings/openresty.gpg
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/openresty.gpg] http://openresty.org/package/ubuntu $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/openresty.list
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends openresty openresty-resty openresty-opm
+        # Install luarocks separately
+        sudo apt-get install -y --no-install-recommends luarocks
+
+    - name: Add OpenResty to PATH
+      shell: bash
+      run: |
+        echo "/usr/local/openresty/bin" >> $GITHUB_PATH
+        echo "/usr/local/openresty/luajit/bin" >> $GITHUB_PATH
+
+    - name: Install test framework
+      shell: bash
+      run: |
+        set -euo pipefail
+        luarocks install busted
+        # Install lua-resty-busted for OpenResty compatibility
+        git clone --depth 1 https://github.com/thibaultcha/lua-resty-busted /tmp/lua-resty-busted
+        sudo cp /tmp/lua-resty-busted/bin/busted /usr/local/bin/resty-busted
+        sudo chmod +x /usr/local/bin/resty-busted
+
+    - name: Install additional luarocks
+      if: ${{ inputs.luarocks != '' }}
+      shell: bash
+      env:
+        LUAROCKS: ${{ inputs.luarocks }}
+      run: |
+        set -euo pipefail
+        for rock in ${LUAROCKS}; do
+          luarocks install "${rock}"
+        done
+
+    - name: "Export .env.test environment variables"
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: test -f .env.test && cat .env.test >> "$GITHUB_ENV" || true
+
+    - name: "Execute extra setup step"
+      if: ${{ hashFiles('bin/scalingo-ci-extra-setup.sh') != '' }}
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: bin/scalingo-ci-extra-setup.sh
+
+    - name: "Run tests"
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        COMMAND: ${{ inputs.command }}
+      run: |
+        set -euo pipefail
+        ${COMMAND}
