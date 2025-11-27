@@ -67,6 +67,7 @@ runs:
       run: |
         set -euo pipefail
         mkdir -p "${LUAROCKS_TREE}"
+        # Export luarocks paths (LUA_PATH, LUA_CPATH) for subsequent steps
         eval "$(luarocks --tree "${LUAROCKS_TREE}" path)"
         echo "LUAROCKS_TREE=${LUAROCKS_TREE}" >> "${GITHUB_ENV}"
         echo "LUA_PATH=${LUA_PATH}" >> "${GITHUB_ENV}"
@@ -80,7 +81,7 @@ runs:
         set -euo pipefail
         eval "$(luarocks --tree "${LUAROCKS_TREE}" path)"
         luarocks --tree "${LUAROCKS_TREE}" install busted
-        # Install lua-resty-busted for OpenResty compatibility
+        # resty-busted wraps busted to run tests with OpenResty's LuaJIT
         git clone --depth 1 https://github.com/thibaultcha/lua-resty-busted /tmp/lua-resty-busted
         sudo cp /tmp/lua-resty-busted/bin/busted /usr/local/bin/resty-busted
         sudo chmod +x /usr/local/bin/resty-busted
@@ -101,6 +102,7 @@ runs:
             INSTALL_ARGS+=(--server "${LUAROCKS_SERVER}")
           fi
           if [[ -n "${LUAROCKS_FLAGS}" ]]; then
+            # Split LUAROCKS_FLAGS into array for additional install options (e.g., --only-deps, --dev)
             # shellcheck disable=SC2206
             EXTRA=(${LUAROCKS_FLAGS})
             INSTALL_ARGS+=("${EXTRA[@]}")
