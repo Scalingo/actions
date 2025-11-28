@@ -3,30 +3,30 @@ description: "Lint Lua codebases with lua-language-server"
 
 inputs:
   path:
-    description: "Path passed to lua-language-server --check"
-    required: false
-    default: "."
-  base-ref:
-    description: "Deprecated: kept for backward compatibility; no effect when linting the entire repository"
+    description: "Deprecated: directory to lint (prefer working-directory)"
     required: false
     default: ""
+  working-directory:
+    description: "Directory to lint (full repository recommended)"
+    required: false
+    default: "."
   checklevel:
-    description: "lua-language-server check level"
+    description: "lua-language-server --checklevel (Error, Warning, Information, Hint)"
     required: false
     default: "Hint"
   lua-path:
-    description: "Value to export as LUA_PATH before linting"
+    description: "Optional LUA_PATH to export before linting"
     required: false
     default: ""
   lua-language-server-version:
-    description: "Version of lua-language-server to install"
+    description: "lua-language-server version to install (use 'latest' for the newest release)"
     required: false
-    default: "3.15.0"
+    default: "latest"
 
 runs:
   using: "composite"
   steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 0
         repository: ${{ github.repository }}
@@ -46,12 +46,16 @@ runs:
 
     - name: Lint Lua codebase
       shell: bash
-      working-directory: ${{ inputs.path }}
+      working-directory: ${{ inputs.working-directory }}
       env:
+        INPUT_PATH: ${{ inputs.path }}
         LUA_PATH: ${{ inputs.lua-path }}
         CHECKLEVEL: ${{ inputs.checklevel }}
       run: |
         set -euo pipefail
+        if [[ -n "${INPUT_PATH}" ]]; then
+          cd "${INPUT_PATH}"
+        fi
         LUALS_BIN="${HOME}/.cache/lua-language-server/bin/lua-language-server"
         if [[ -n "${LUA_PATH}" ]]; then
           echo "Using LUA_PATH=${LUA_PATH}"
