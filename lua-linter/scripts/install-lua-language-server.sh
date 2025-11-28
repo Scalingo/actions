@@ -41,7 +41,7 @@ rm --recursive --force "${CACHE_DIR}"
 mkdir --parents "${CACHE_DIR}"
 
 echo "Downloading lua-language-server ${VERSION}"
-curl --fail --silent --show-error --location "${ARCHIVE_URL}" | tar --extract --gzip --strip-components=1 --directory "${CACHE_DIR}"
+curl --fail --silent --show-error --location "${ARCHIVE_URL}" | tar --extract --gzip --directory "${CACHE_DIR}"
 
 echo "${VERSION}" > "${VERSION_FILE}"
 "${CACHE_DIR}/bin/lua-language-server" --version
