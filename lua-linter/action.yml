@@ -8,14 +8,6 @@ inputs:
       Hint (default) reports everything. Error only reports critical issues.
     required: false
     default: "Hint"
-  lua-path:
-    description: >
-      LUA_PATH is the Lua equivalent of PATH for modules - it tells Lua where
-      to look for require() calls. By default Lua searches in paths like
-      ./?.lua and /usr/local/share/lua/5.1/?.lua (see https://www.lua.org/pil/8.1.html).
-      Set this when your project has Lua modules in non-standard locations.
-    required: false
-    default: ""
 
 runs:
   using: "composite"
@@ -31,6 +23,5 @@ runs:
     - name: Lint Lua codebase
       shell: bash
       env:
-        LUA_PATH: ${{ inputs.lua-path }}
         CHECKLEVEL: ${{ inputs.checklevel }}
       run: "${GITHUB_ACTION_PATH}/scripts/run-lua-lint.sh"
