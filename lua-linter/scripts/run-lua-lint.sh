@@ -3,7 +3,7 @@ set -euo pipefail
 
 CHECKLEVEL="${CHECKLEVEL:-Hint}"
 LUA_PATH="${LUA_PATH:-}"
-LUALS_BIN="${HOME}/.cache/lua-language-server/bin/lua-language-server"
+LUALS_BIN="${RUNNER_TEMP:-/tmp}/lua-language-server/bin/lua-language-server"
 
 if [[ -n "${LUA_PATH}" ]]; then
   echo "Using LUA_PATH=${LUA_PATH}"

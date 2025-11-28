@@ -11,9 +11,10 @@ inputs:
     default: "Hint"
   lua-path:
     description: >
-      Custom Lua module search path (LUA_PATH environment variable).
-      This is needed when a project has Lua modules in non-standard locations
-      that the linter needs to resolve. Example: "./lua/packages/?.lua;;"
+      LUA_PATH is the Lua equivalent of PATH for modules - it tells Lua where
+      to look for require() calls. By default Lua searches in paths like
+      ./?.lua and /usr/local/share/lua/5.1/?.lua (see https://www.lua.org/pil/8.1.html).
+      Set this when your project has Lua modules in non-standard locations.
     required: false
     default: ""
 
@@ -23,12 +24,6 @@ runs:
     - uses: actions/checkout@v6
       with:
         fetch-depth: 0
-
-    - name: Restore lua-language-server cache
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/lua-language-server
-        key: lua-language-server-${{ runner.os }}-latest
 
     - name: Install lua-language-server
       shell: bash
