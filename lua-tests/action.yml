@@ -1,122 +1,42 @@
 name: "Scalingo Lua tests GitHub Action"
-description: "Run Lua/OpenResty test suites with busted"
+description: "Run Lua test suites with a repository-provided command"
 
 inputs:
-  openresty-version:
-    description: "OpenResty version to install (apt package)"
-    required: false
-    default: "1.27.1.1"
   working-directory:
     description: "Directory to run tests from"
     required: false
     default: "."
   command:
-    description: "Command to run tests"
+    description: "Command to run tests (should be provided by the repository)"
     required: false
     default: "bin/specs"
-  luarocks:
-    description: "Space-separated list of luarocks to install"
+  env-file:
+    description: "Optional environment file to export before running tests"
     required: false
-    default: ""
-  luarocks-server:
-    description: "Optional luarocks server to install rocks from"
-    required: false
-    default: ""
-  luarocks-flags:
-    description: "Additional flags passed to luarocks install (applied to every rock)"
-    required: false
-    default: ""
-  luarocks-tree:
-    description: "Where to install luarocks (local tree)"
-    required: false
-    default: "${{ runner.temp }}/luarocks"
+    default: ".env.test"
 
 runs:
   using: "composite"
   steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       if: ${{ github.repository != 'Scalingo/actions' }}
       with:
         repository: ${{ github.repository }}
         ref: ${{ github.ref }}
 
-    - name: Install OpenResty from apt
-      shell: bash
-      env:
-        OPENRESTY_VERSION: ${{ inputs.openresty-version }}
-      run: |
-        set -euo pipefail
-        # Add OpenResty GPG key and repository
-        wget -qO - https://openresty.org/package/pubkey.gpg | sudo gpg --dearmor -o /usr/share/keyrings/openresty.gpg
-        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/openresty.gpg] http://openresty.org/package/ubuntu $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/openresty.list
-        sudo apt-get update
-        sudo apt-get install -y --no-install-recommends openresty openresty-resty openresty-opm
-        # Install luarocks separately
-        sudo apt-get install -y --no-install-recommends luarocks
-
-    - name: Add OpenResty to PATH
-      shell: bash
-      run: |
-        echo "/usr/local/openresty/bin" >> $GITHUB_PATH
-        echo "/usr/local/openresty/luajit/bin" >> $GITHUB_PATH
-
-    - name: Configure local luarocks tree
-      shell: bash
-      env:
-        LUAROCKS_TREE: ${{ inputs.luarocks-tree }}
-      run: |
-        set -euo pipefail
-        mkdir -p "${LUAROCKS_TREE}"
-        # Export luarocks paths (LUA_PATH, LUA_CPATH) for subsequent steps
-        eval "$(luarocks --tree "${LUAROCKS_TREE}" path)"
-        echo "LUAROCKS_TREE=${LUAROCKS_TREE}" >> "${GITHUB_ENV}"
-        echo "LUA_PATH=${LUA_PATH}" >> "${GITHUB_ENV}"
-        echo "LUA_CPATH=${LUA_CPATH}" >> "${GITHUB_ENV}"
-        echo "PATH=${PATH}" >> "${GITHUB_ENV}"
-        echo "${LUAROCKS_TREE}/bin" >> "${GITHUB_PATH}"
-
-    - name: Install test framework
-      shell: bash
-      run: |
-        set -euo pipefail
-        eval "$(luarocks --tree "${LUAROCKS_TREE}" path)"
-        luarocks --tree "${LUAROCKS_TREE}" install busted
-        # resty-busted wraps busted to run tests with OpenResty's LuaJIT
-        git clone --depth 1 https://github.com/thibaultcha/lua-resty-busted /tmp/lua-resty-busted
-        sudo cp /tmp/lua-resty-busted/bin/busted /usr/local/bin/resty-busted
-        sudo chmod +x /usr/local/bin/resty-busted
-
-    - name: Install additional luarocks
-      if: ${{ inputs.luarocks != '' }}
-      shell: bash
-      env:
-        LUAROCKS: ${{ inputs.luarocks }}
-        LUAROCKS_SERVER: ${{ inputs.luarocks-server }}
-        LUAROCKS_FLAGS: ${{ inputs.luarocks-flags }}
-      run: |
-        set -euo pipefail
-        eval "$(luarocks --tree "${LUAROCKS_TREE}" path)"
-        for rock in ${LUAROCKS}; do
-          INSTALL_ARGS=(--tree "${LUAROCKS_TREE}")
-          if [[ -n "${LUAROCKS_SERVER}" ]]; then
-            INSTALL_ARGS+=(--server "${LUAROCKS_SERVER}")
-          fi
-          if [[ -n "${LUAROCKS_FLAGS}" ]]; then
-            # Split LUAROCKS_FLAGS into array for additional install options (e.g., --only-deps, --dev)
-            # shellcheck disable=SC2206
-            EXTRA=(${LUAROCKS_FLAGS})
-            INSTALL_ARGS+=("${EXTRA[@]}")
-          fi
-          luarocks "${INSTALL_ARGS[@]}" install "${rock}"
-        done
-
-    - name: "Export .env.test environment variables"
+    - name: "Export env file"
       shell: bash
       working-directory: ${{ inputs.working-directory }}
-      run: test -f .env.test && cat .env.test >> "$GITHUB_ENV" || true
+      env:
+        ENV_FILE: ${{ inputs.env-file }}
+      run: |
+        set -euo pipefail
+        if [[ -f "${ENV_FILE}" ]]; then
+          cat "${ENV_FILE}" >> "${GITHUB_ENV}"
+        fi
 
     - name: "Execute extra setup step"
-      if: ${{ hashFiles('bin/scalingo-ci-extra-setup.sh') != '' }}
+      if: ${{ hashFiles(format('{0}/bin/scalingo-ci-extra-setup.sh', inputs.working-directory)) != '' }}
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: bin/scalingo-ci-extra-setup.sh
