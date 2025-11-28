@@ -111,15 +111,20 @@ runs:
 
     - name: Set GitHub Status Check
       shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github_token }}
+        REPOSITORY: ${{ github.repository }}
+        RUN_ID: ${{ github.run_id }}
+        SHA: ${{ github.sha }}
       run: |
-        if [ -n "${{ inputs.github_token }}" ] && [ -f coverage/.last_run.json ]; then
+        if [ -n "$GH_TOKEN" ] && [ -f coverage/.last_run.json ]; then
           LINE_COVERAGE=$(jq '.result.line' coverage/.last_run.json)
           BRANCH_COVERAGE=$(jq '.result.branch' coverage/.last_run.json)
           PAYLOAD=$(jq -n \
             --arg state "success" \
             --arg context "Coverage Report" \
             --arg description "Line: ${LINE_COVERAGE}% | Branch: ${BRANCH_COVERAGE}%" \
-            --arg target_url "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --arg target_url "https://github.com/\"$REPOSITORY\"/actions/runs/\"$RUN_ID\"" \
             '{
               state: $state,
               context: $context,
@@ -128,10 +133,8 @@ runs:
             }')
           gh api \
           --method POST \
-          repos/${{ github.repository }}/statuses/${{ github.sha }} \
+          repos/"$REPOSITORY"/statuses/"$SHA" \
           --input - <<< "$PAYLOAD"
         else
           echo "No coverage report found."
         fi
-      env:
-        GH_TOKEN: ${{ inputs.github_token }}
