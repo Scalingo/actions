@@ -12,27 +12,19 @@ resolve_version() {
     return
   fi
 
-  local api_url="https://api.github.com/repos/LuaLS/lua-language-server/releases/latest"
-  local auth_header=()
-  if [[ -n "${GITHUB_TOKEN:-}" ]]; then
-    auth_header=(--header "Authorization: Bearer ${GITHUB_TOKEN}")
-  fi
-
-  local latest_tag
+  # Resolve via the public redirect
+  local latest_tag=""
   latest_tag=$(
-    curl --fail --silent --show-error --location \
-      --header "Accept: application/vnd.github+json" \
-      "${auth_header[@]}" \
-      "${api_url}" |
-      python - <<'PY'
-import json, sys
-data = json.load(sys.stdin)
-tag = data.get("tag_name") or data.get("name")
-if not tag:
-    sys.exit("Unable to determine latest lua-language-server release tag")
-print(tag.lstrip("v"))
-PY
-  )
+    curl --fail --silent --head --location https://github.com/LuaLS/lua-language-server/releases/latest \
+      | awk '/^location:/ {print $2}' \
+      | tr -d '\r' \
+      | sed -n 's#.*/tag/v\{0,1\}\([0-9][^/]*\)#\1#p'
+  ) || latest_tag=""
+
+  if [[ -z "${latest_tag}" ]]; then
+    echo "Error: failed to resolve latest lua-language-server release" >&2
+    exit 1
+  fi
 
   echo "${latest_tag}"
 }
