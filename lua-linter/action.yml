@@ -2,22 +2,20 @@ name: "Scalingo Lua linter GitHub Action"
 description: "Lint Lua codebases with lua-language-server"
 
 inputs:
-  working-directory:
-    description: "Directory to lint (full repository recommended)"
-    required: false
-    default: "."
   checklevel:
-    description: "lua-language-server --checklevel (Error, Warning, Information, Hint)"
+    description: >
+      Minimum diagnostic level to log (Error, Warning, Information, Hint).
+      Default is Warning but we set Hint to catch all diagnostics.
+      See https://luals.github.io/wiki/usage/#--checklevel
     required: false
     default: "Hint"
   lua-path:
-    description: "Optional LUA_PATH to export before linting"
+    description: >
+      Custom Lua module search path (LUA_PATH environment variable).
+      This is needed when a project has Lua modules in non-standard locations
+      that the linter needs to resolve. Example: "./lua/packages/?.lua;;"
     required: false
     default: ""
-  lua-language-server-version:
-    description: "lua-language-server version to install (use 'latest' for the newest release)"
-    required: false
-    default: "latest"
 
 runs:
   using: "composite"
@@ -30,18 +28,15 @@ runs:
       uses: actions/cache@v4
       with:
         path: ~/.cache/lua-language-server
-        key: lua-language-server-${{ runner.os }}-${{ inputs.lua-language-server-version }}
+        key: lua-language-server-${{ runner.os }}-latest
 
     - name: Install lua-language-server
       shell: bash
-      env:
-        LUALS_VERSION: ${{ inputs.lua-language-server-version }}
-      run: bash "${GITHUB_ACTION_PATH}/scripts/install-lua-language-server.sh"
+      run: "${GITHUB_ACTION_PATH}/scripts/install-lua-language-server.sh"
 
     - name: Lint Lua codebase
       shell: bash
-      working-directory: ${{ inputs.working-directory }}
       env:
         LUA_PATH: ${{ inputs.lua-path }}
         CHECKLEVEL: ${{ inputs.checklevel }}
-      run: bash "${GITHUB_ACTION_PATH}/scripts/run-lua-lint.sh"
+      run: "${GITHUB_ACTION_PATH}/scripts/run-lua-lint.sh"

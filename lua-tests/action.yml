@@ -1,11 +1,5 @@
 name: "Scalingo Lua tests GitHub Action"
-description: "Run Lua test suites with a repository-provided command"
-
-inputs:
-  env-file:
-    description: "Optional environment file to export before running tests (path relative to repository root)"
-    required: false
-    default: ".env.test"
+description: "Run Lua test suites with bin/specs"
 
 runs:
   using: "composite"
@@ -15,12 +9,10 @@ runs:
 
     - name: "Export env file"
       shell: bash
-      env:
-        ENV_FILE: ${{ inputs.env-file }}
       run: |
         set -euo pipefail
-        if [[ -f "${ENV_FILE}" ]]; then
-          cat "${ENV_FILE}" >> "${GITHUB_ENV}"
+        if [[ -f ".env.test" ]]; then
+          cat ".env.test" >> "${GITHUB_ENV}"
         fi
 
     - name: "Execute extra setup step"
@@ -30,10 +22,4 @@ runs:
 
     - name: "Run tests"
       shell: bash
-      run: |
-        set -euo pipefail
-        if [[ ! -x "bin/specs" ]]; then
-          echo "Expected executable test runner at bin/specs but it was not found."
-          exit 1
-        fi
-        bin/specs
+      run: bin/specs
