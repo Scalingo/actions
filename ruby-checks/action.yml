@@ -1,0 +1,74 @@
+name: "Scalingo Ruby Specs GitHub Action"
+description: "Execute Ruby specs with code coverage in a GitHub Action"
+
+inputs:
+  # Rubocop is a linter for Ruby code
+  rubocop:
+    description: "Execute RuboCop if needed. Possible values: true | false | auto"
+    required: false
+    default: "auto"
+  # Brakeman is a static analysis security vulnerability scanner for Ruby on Rails applications
+  brakeman:
+    description: "Execute Brakeman if needed. Possible values: true | false | auto"
+    required: false
+    default: "auto"
+  # Zeitwerk is a code loader for Ruby applications. The Zeitwerk check ensures that the code will be loaded correctly at runtime.
+  zeitwerk:
+    description: "Execute Zeitwerk check if needed. Possible values: true | false | auto"
+    required: false
+    default: "auto"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set environment variables
+      shell: bash
+      run: |
+        echo "RACK_ENV=test" >> $GITHUB_ENV
+        echo "RAILS_ENV=test" >> $GITHUB_ENV
+
+    - uses: actions/checkout@v4
+
+    - uses: ruby/setup-ruby@v1
+      with:
+        bundler-cache: true
+
+    - name: Check ruby version consistency
+      shell: bash
+      run: ${GITHUB_ACTION_PATH}/scripts/check-ruby-consistency.sh
+
+    - name: Determine if RuboCop should be executed
+      id: rubocop_check
+      shell: bash
+      run: ${GITHUB_ACTION_PATH}/scripts/check-rubocop.sh >> $GITHUB_OUTPUT
+      env:
+        WITH_RUBOCOP: "${{ inputs.rubocop }}"
+
+    - name: Linter
+      if: ${{ steps.rubocop_check.outputs.should_run == 'true' }}
+      shell: bash
+      run: bundle exec rubocop --format github
+
+    - name: Determine if Brakeman should be executed
+      id: brakeman_check
+      shell: bash
+      run: ${GITHUB_ACTION_PATH}/scripts/check-brakeman.sh >> $GITHUB_OUTPUT
+      env:
+        WITH_BRAKEMAN: "${{ inputs.brakeman }}"
+
+    - name: Brakeman
+      if: ${{ steps.brakeman_check.outputs.should_run == 'true' }}
+      shell: bash
+      run: bundle exec brakeman -A --no-exit-on-warn --no-summary --no-pager --quiet
+
+    - name: Determine if Zeitwerk should be executed
+      id: zeitwerk_check
+      shell: bash
+      run: ${GITHUB_ACTION_PATH}/scripts/check-zeitwerk.sh >> $GITHUB_OUTPUT
+      env:
+        WITH_ZEITWERK: "${{ inputs.zeitwerk }}"
+
+    - name: Zeitwerk
+      if: ${{ steps.zeitwerk_check.outputs.should_run == 'true' }}
+      shell: bash
+      run: bundle exec rake zeitwerk:check
