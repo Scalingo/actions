@@ -2,10 +2,6 @@ name: "Scalingo Lua linter GitHub Action"
 description: "Lint Lua codebases with lua-language-server"
 
 inputs:
-  path:
-    description: "Deprecated: directory to lint (prefer working-directory)"
-    required: false
-    default: ""
   working-directory:
     description: "Directory to lint (full repository recommended)"
     required: false
@@ -48,20 +44,6 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       env:
-        INPUT_PATH: ${{ inputs.path }}
         LUA_PATH: ${{ inputs.lua-path }}
         CHECKLEVEL: ${{ inputs.checklevel }}
-      run: |
-        set -euo pipefail
-        if [[ -n "${INPUT_PATH}" ]]; then
-          cd "${INPUT_PATH}"
-        fi
-        LUALS_BIN="${HOME}/.cache/lua-language-server/bin/lua-language-server"
-        if [[ -n "${LUA_PATH}" ]]; then
-          echo "Using LUA_PATH=${LUA_PATH}"
-        fi
-        if [[ ! -x "${LUALS_BIN}" ]]; then
-          echo "lua-language-server binary not found at ${LUALS_BIN}"
-          exit 1
-        fi
-        "${LUALS_BIN}" --check "${PWD}" --checklevel="${CHECKLEVEL}"
+      run: bash "${GITHUB_ACTION_PATH}/scripts/run-lua-lint.sh"
