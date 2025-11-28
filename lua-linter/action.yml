@@ -25,8 +25,6 @@ runs:
     - uses: actions/checkout@v6
       with:
         fetch-depth: 0
-        repository: ${{ github.repository }}
-        ref: ${{ github.ref }}
 
     - name: Restore lua-language-server cache
       uses: actions/cache@v4

@@ -12,9 +12,6 @@ runs:
   steps:
     - uses: actions/checkout@v6
       if: ${{ github.repository != 'Scalingo/actions' }}
-      with:
-        repository: ${{ github.repository }}
-        ref: ${{ github.ref }}
 
     - name: "Export env file"
       shell: bash
