@@ -6,6 +6,10 @@ inputs:
     description: "Install sqlc if needed. Possible values: true | false | auto"
     required: false
     default: "auto"
+  working-directory:
+    description: "Change the working directory for the tests execution. This must only be used if the Go code is not at the root of the repository. The default value should work for 99.9% of the projects."
+    required: false
+    default: ${{ github.workspace }}
 
 runs:
   using: "composite"
@@ -19,14 +23,18 @@ runs:
 
     - uses: actions/setup-go@v6
       with:
-        go-version-file: "go.mod"
+        go-version-file: "${{ inputs.working-directory }}/go.mod"
         check-latest: true
+        cache-dependency-path: "${{ inputs.working-directory }}/go.sum"
 
     # Execute the `lint-go-version` script
-    - shell: bash
+    - name: Download the lint-go-version script
+      shell: bash
       run: |
-        wget --output-document=$(pwd)/lint-go-version https://sc-devtools.s3.eu-west-1.amazonaws.com/golang-ci/lint-go-version
-        bash $(pwd)/lint-go-version
+        wget --output-document=${working_directory}/lint-go-version https://sc-devtools.s3.eu-west-1.amazonaws.com/golang-ci/lint-go-version
+        bash ${working_directory}/lint-go-version
+      env:
+        working_directory: ${{ inputs.working-directory }}
 
     - name: Determine if sqlc is needed
       id: sqlc_check
@@ -45,8 +53,11 @@ runs:
         SQLC_CONFIGURATION_FILE: "${{ steps.sqlc_check.outputs.configuration_file }}"
 
     # Execute golangci-lint
-    - shell: bash
-      run: wget --output-document=$(pwd)/.golangci.yml https://sc-devtools.s3.eu-west-1.amazonaws.com/golang-ci/golangci.yml
+    - name: Download golangci-lint configuration file
+      shell: bash
+      run: wget --output-document=${working_directory}/.golangci.yml https://sc-devtools.s3.eu-west-1.amazonaws.com/golang-ci/golangci.yml
+      env:
+        working_directory: ${{ inputs.working-directory }}
     # Some projects have no vendor directory (mostly because they are actually a library)
     - name: "Configure modules download mode"
       shell: bash
@@ -58,6 +69,7 @@ runs:
     - name: "Execute golangci-lint on a pull request"
       uses: Scalingo/golangci-lint-action@v8
       with:
+        working-directory: ${{ matrix.modules }}
         # The `only-new-issues` flag is not working (https://github.com/golangci/golangci-lint-action/issues/531).
         # We rather decided to use the suggestion from the FAQ (https://golangci-lint.run/docs/welcome/faq/#how-to-integrate-golangci-lint-into-a-large-project-with-thousands-of-issues) and use `--new-from-rev`
         # only-new-issues: false
