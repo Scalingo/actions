@@ -29,6 +29,10 @@ runs:
 
     - uses: actions/checkout@v4
 
+    - name: "Export .env.test environment variables into the GitHub Action environment"
+      shell: bash
+      run: test -f .env.test && grep -v '^#' .env.test >> "$GITHUB_ENV" || true
+
     - uses: ruby/setup-ruby@v1
       with:
         bundler-cache: true
