@@ -28,6 +28,26 @@ jobs:
 
 The calling repository can customize the unit tests environment by adding a script `bin/scalingo-ci-extra-setup.sh` that is executed before the unit tests execution.
 
+## Ruby Continuous Integration
+
+The Ruby specs GitHub action has different options that can be enabled if needed:
+- Specs:
+  - `mongodb`: run a MongoDB database so that specs can use it. An environment variable is set in the specs execution environment with the connection string. The default value is `auto`. With this value the action tries to automatically detect if MongoDB is configured on the project (by checking for the `mongoid` gem in `Gemfile`). Other possible options are `true` and `false`.
+  - `redis`: run a Redis database reachable on `127.0.0.1:6379`. The default value is `auto`. With this value the action tries to automatically detect if Redis is configured on the project (by checking for the `redis` gem in `Gemfile`). Other possible options are `true` and `false`.
+  - `pact`: execute Pact verification after the specs if needed. The default value is `auto`. With this value the action tries to automatically detect if Pact is configured on the project (by checking for the `pact:verify` rake task in the Rakefile). Other possible options are `true` and `false`.
+  - `github_token`: GitHub token for API access. It is used to upload code coverage status. If not set, the action doesn't upload code coverage status on github. Note: the [permission `statuses: write` must be granted to the GitHub token](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#defining-access-for-the-github_token-scopes-1) used in order to report coverage status.
+
+Enable one of these options with:
+
+```yml
+jobs:
+  specs:
+    # ...
+    steps:
+      - uses: Scalingo/actions/ruby-specs@main
+        with:
+          mongodb: true
+```
 ## Go release process
 
 Two actions are present to release services which are go binaries:
