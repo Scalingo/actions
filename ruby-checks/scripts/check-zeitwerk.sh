@@ -6,4 +6,4 @@
 #
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-"${SCRIPT_DIR}/check-tool.sh" "WITH_ZEITWERK" "bundle exec rake --tasks 2>/dev/null | grep --quiet 'zeitwerk:check'"
+"${SCRIPT_DIR}/check-tool.sh" "WITH_ZEITWERK" "bundle exec rake --tasks | grep --quiet 'zeitwerk:check'"
