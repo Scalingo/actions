@@ -6,4 +6,4 @@
 #
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-"${SCRIPT_DIR}/check-tool.sh" "WITH_PACT" "bundle exec rake --tasks 2>/dev/null | grep --quiet 'pact:verify'"
+"${SCRIPT_DIR}/check-tool.sh" "WITH_PACT" "bundle exec rake --tasks | grep --quiet 'pact:verify'"

@@ -6,4 +6,4 @@
 #
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-"${SCRIPT_DIR}/check-tool.sh" "WITH_MONGODB" "grep --quiet 'mongoid' Gemfile 2>/dev/null"
+"${SCRIPT_DIR}/check-tool.sh" "WITH_MONGODB" "grep --quiet 'mongoid' Gemfile"
