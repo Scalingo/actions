@@ -30,7 +30,11 @@ The calling repository can customize the unit tests environment by adding a scri
 
 ## Ruby Continuous Integration
 
-The Ruby specs GitHub action has different options that can be enabled if needed:
+The Ruby checks and specs GitHub actions have different options that can be enabled if needed:
+- Checks:
+  - `rubocop`: execute RuboCop linter. The default value is `auto`. With this value the action tries to automatically detect if RuboCop is available in the bundle. Other possible options are `true` and `false`.
+  - `brakeman`: execute Brakeman security scanner. The default value is `auto`. With this value the action tries to automatically detect if Brakeman is available in the bundle. Other possible options are `true` and `false`.
+  - `zeitwerk`: execute Zeitwerk loader check. The default value is `auto`. With this value the action tries to automatically detect if the `zeitwerk:check` rake task exists. Other possible options are `true` and `false`.
 - Specs:
   - `mongodb`: run a MongoDB database so that specs can use it. An environment variable is set in the specs execution environment with the connection string. The default value is `auto`. With this value the action tries to automatically detect if MongoDB is configured on the project (by checking for the `mongoid` gem in `Gemfile`). Other possible options are `true` and `false`.
   - `redis`: run a Redis database reachable on `127.0.0.1:6379`. The default value is `auto`. With this value the action tries to automatically detect if Redis is configured on the project (by checking for the `redis` gem in `Gemfile`). Other possible options are `true` and `false`.
@@ -41,12 +45,22 @@ Enable one of these options with:
 
 ```yml
 jobs:
+  checks:
+    # ...
+    steps:
+      - uses: Scalingo/actions/ruby-checks@main
+        with:
+          - <option_name>: true | false
+```
+
+```yml
+jobs:
   specs:
     # ...
     steps:
       - uses: Scalingo/actions/ruby-specs@main
         with:
-          mongodb: true
+          - <option_name>: true | false
 ```
 ## Go release process
 
