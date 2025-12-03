@@ -14,6 +14,10 @@ inputs:
     description: "Start Redis if needed"
     required: false
     default: "false"
+  working-directory:
+    description: "Change the working directory for the tests execution. This must only be used if the Go code is not at the root of the repository. The default value should work for 99.9% of the projects."
+    required: false
+    default: ${{ github.workspace }}
 
 runs:
   using: "composite"
@@ -27,11 +31,13 @@ runs:
 
     - uses: actions/setup-go@v6
       with:
-        go-version-file: "go.mod"
+        go-version-file: "${{ inputs.working-directory }}/go.mod"
         check-latest: true
+        cache-dependency-path: "${{ inputs.working-directory }}/go.sum"
 
     - name: "Set tests specific environment variables into the GitHub Action environment"
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
       run: |
         echo "TMPDIR=${RUNNER_TEMP}" >> $GITHUB_ENV
         test -f .env.test && cat .env.test >> "$GITHUB_ENV" || true
@@ -39,6 +45,7 @@ runs:
     - name: Determine if MongoDB is needed
       id: mongodb_check
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
       run: ${GITHUB_ACTION_PATH}/scripts/mongodb-check.sh >> $GITHUB_OUTPUT
       env:
         WITH_MONGODB: "${{ inputs.mongodb }}"
@@ -46,25 +53,30 @@ runs:
     - name: "Start a MongoDB container"
       if: ${{ steps.mongodb_check.outputs.should_start == 'true' }}
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
       run: ${GITHUB_ACTION_PATH}/scripts/mongodb-start.sh
 
     - name: "Start a etcd container"
       if: ${{ inputs.etcd == 'true' }}
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
       run: ${GITHUB_ACTION_PATH}/scripts/etcd-start.sh
 
     - name: "Start a Redis container"
       if: ${{ inputs.redis == 'true' }}
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
       run: ${GITHUB_ACTION_PATH}/scripts/redis-start.sh
 
     # Only execute this step if the repository contains the extra setup script
     - name: "Execute the extra setup step"
       if: ${{ hashFiles('bin/scalingo-ci-extra-setup.sh') != '' }}
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
       run: bin/scalingo-ci-extra-setup.sh
 
     # Execute the unit tests
     - name: "Execute Go unit tests"
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
       run: go test -race -timeout ${SCALINGO_GO_TIMEOUT:-10m} ./...
