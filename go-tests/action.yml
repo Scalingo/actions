@@ -39,6 +39,14 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
+        # Configure Go's temporary directory to use GitHub Actions' built-in temp directory.
+        # os.TempDir() uses the TMPDIR environment variable when it is set.
+        # RUNNER_TEMP is GitHub Actions' built-in temp directory,
+        # We point TMPDIR to RUNNER_TEMP so that all calls to os.TempDir() during tests use
+        # GitHub Actions' built-in temp directory.
+        #
+        # os.TempDir docs: https://pkg.go.dev/os#TempDir
+        # RUNNER_TEMP docs: https://docs.github.com/en/actions/reference/workflows-and-actions/variables#default-environment-variables
         echo "TMPDIR=${RUNNER_TEMP}" >> $GITHUB_ENV
         test -f .env.test && cat .env.test >> "$GITHUB_ENV" || true
 
