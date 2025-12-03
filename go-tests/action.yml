@@ -39,6 +39,9 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
+        # TMPDIR is used by Go when calling os.TempDir. We set it to RUNNER_TEMP that is the path to a temporary directory on the runner. By setting TMPDIR in all tests execution, all calls to os.TempDir work out of the box.
+        # os.TempDir: https://pkg.go.dev/os#TempDir
+        # RUNNER_TEMP: https://docs.github.com/en/actions/reference/workflows-and-actions/variables#default-environment-variables
         echo "TMPDIR=${RUNNER_TEMP}" >> $GITHUB_ENV
         test -f .env.test && cat .env.test >> "$GITHUB_ENV" || true
 
