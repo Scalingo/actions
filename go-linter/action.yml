@@ -67,7 +67,7 @@ runs:
           echo "modules_download_mode=--modules-download-mode=mod" >> $GITHUB_OUTPUT
         fi
     - name: "Execute golangci-lint on a pull request"
-      uses: golangci/golangci-lint-action@v9
+      uses: Scalingo/golangci-lint-action@v9
       with:
         working-directory: ${{ matrix.modules }}
         # The `only-new-issues` flag is not working (https://github.com/golangci/golangci-lint-action/issues/531).
