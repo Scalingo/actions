@@ -24,6 +24,14 @@ description: "Create tag and stable release based on the name of the branch, pat
 #       name: production        # <-- triggers the approval gate in the environment
 #     steps:
 #       - uses: Scalingo/actions/go-stable-release@main
+#         with:
+#           - github_token=secrets.GITHUB_TOKEN
+#
+
+inputs:
+  github_token:
+    description: "GitHub token for API access. It is used to create tag and release."
+    required: true
 
 runs:
   using: composite
@@ -75,13 +83,13 @@ runs:
         args: release --config .goreleaser-prod.yml --clean
       env:
         GORELEASER_CURRENT_TAG: ${{ steps.meta.outputs.tag }}
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ inputs.github_token }}
         CGO_ENABLED: 0
 
     # --- Cleanup temporary branches after successful release ---
     - name: Delete temporary release branches (release/* and prepare)
       env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ inputs.github_token }}
         REPO: ${{ github.repository }}
         BASE_REF: ${{ github.event.pull_request.base.ref }}   # e.g. release/v2.7.0
         HEAD_REF: ${{ github.event.pull_request.head.ref }}   # e.g. release/v2.7.0-prepare
