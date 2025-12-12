@@ -24,6 +24,13 @@ description: "Create pre-release of current revision based on the name of the pr
 # 
 #     steps:
 #       - uses: Scalingo/actions/go-rolling-release@main
+#         with:
+#           - github_token: secrets.GITHUB_TOKEN
+
+inputs:
+  github_token:
+    description: "GitHub token for API access. It is used to create tag and release."
+    required: true
 
 runs:
   using: composite
@@ -72,6 +79,6 @@ runs:
         args: release --clean
       env:
         GORELEASER_CURRENT_TAG: ${{ steps.meta.outputs.tag }}
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ inputs.github_token }}
         CGO_ENABLED: 0
 
