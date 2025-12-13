@@ -48,6 +48,7 @@ runs:
 
     - name: Read Release metadata
       id: meta
+      shell: bash
       run: |
         set -euo pipefail
         test -f VERSION || { echo "VERSION missing"; exit 1; }
@@ -68,6 +69,7 @@ runs:
         fi
 
     - name: Create annotated tag on recorded master SHA
+      shell: bash
       run: |
         git config user.name  "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"

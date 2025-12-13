@@ -42,6 +42,7 @@ runs:
 
     - name: Compute tag (UTC timestamp)
       id: meta
+      shell: bash
       run: |
         set -euo pipefail
         # Try to find the latest semver-style tag like v1.2.3, fallback on
@@ -60,6 +61,7 @@ runs:
     - name: Create and push tag
       env:
         TAG: ${{ steps.meta.outputs.tag }}
+      shell: bash
       run: |
         git config user.name  "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
