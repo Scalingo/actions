@@ -11,9 +11,8 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        if [[ -f ".env.test" ]]; then
-          cat ".env.test" >> "${GITHUB_ENV}"
-        fi
+        test -f .env.test && grep -v '^#' .env.test >> "$GITHUB_ENV" || true
+
 
     - name: "Execute extra setup step"
       if: ${{ hashFiles('bin/scalingo-ci-extra-setup.sh') != '' }}

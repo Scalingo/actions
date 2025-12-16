@@ -30,9 +30,6 @@ runs:
     - name: "Set tests specific environment variables into the GitHub Action environment"
       shell: bash
       run: |
-        echo "RACK_ENV=test" >> $GITHUB_ENV
-        echo "RAILS_ENV=test" >> $GITHUB_ENV
-        echo "TMPDIR=${RUNNER_TEMP}" >> $GITHUB_ENV
         test -f .env.test && grep -v '^#' .env.test >> "$GITHUB_ENV" || true
 
     - name: Check ruby version consistency
