@@ -23,18 +23,17 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Set environment variables
-      shell: bash
-      run: |
-        echo "RAILS_ENV=test" >> $GITHUB_ENV
-        echo "RACK_ENV=test" >> $GITHUB_ENV
-        echo "COVERAGE=true" >> $GITHUB_ENV
-
     - uses: actions/checkout@v6
 
     - uses: ruby/setup-ruby@v1
       with:
         bundler-cache: true
+
+    - name: "Set tests specific environment variables into the GitHub Action environment"
+      shell: bash
+      run: |
+        echo "COVERAGE=true" >> $GITHUB_ENV
+        test -f .env.test && grep -v '^#' .env.test >> "$GITHUB_ENV" || true
 
     - name: Determine if MongoDB is needed
       id: mongodb_check
@@ -69,10 +68,6 @@ runs:
         if bundle exec rake --tasks | grep --quiet "spec:prepare"; then
           bundle exec rake spec:prepare
         fi
-
-    - name: "Export .env.test environment variables into the GitHub Action environment"
-      shell: bash
-      run: test -f .env.test && grep -v '^#' .env.test >> "$GITHUB_ENV" || true
 
     - name: Determine if Pact should be executed
       id: pact_check
