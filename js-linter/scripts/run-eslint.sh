@@ -7,21 +7,21 @@ set -euo pipefail
 
 PACKAGE_MANAGER="${PACKAGE_MANAGER:-npm}"
 
-# Check if there's a lint or eslint script in package.json
+run_cmd() {
+  if [[ "$PACKAGE_MANAGER" == "yarn" ]]; then
+    yarn "$@"
+  else
+    npm run "$@"
+  fi
+}
+
+# Determine which lint command to run
 if [[ -f "package.json" ]] && grep -q '"lint"' package.json; then
   echo "Running lint script from package.json..."
-  if [[ "$PACKAGE_MANAGER" == "yarn" ]]; then
-    yarn lint
-  else
-    npm run lint
-  fi
+  run_cmd lint
 elif [[ -f "package.json" ]] && grep -q '"eslint"' package.json; then
   echo "Running eslint script from package.json..."
-  if [[ "$PACKAGE_MANAGER" == "yarn" ]]; then
-    yarn eslint
-  else
-    npm run eslint
-  fi
+  run_cmd eslint
 else
   echo "No lint script found, running ESLint directly..."
   if [[ "$PACKAGE_MANAGER" == "yarn" ]]; then
