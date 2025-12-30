@@ -1,0 +1,83 @@
+name: "Scalingo JavaScript/TypeScript linter GitHub Action"
+description: "Lint JavaScript/TypeScript codebases with ESLint"
+
+inputs:
+  eslint:
+    description: "Execute ESLint if needed. Possible values: true | false | auto"
+    required: false
+    default: "auto"
+  working-directory:
+    description: "Change the working directory for the linter execution. Default: repository root."
+    required: false
+    default: ${{ github.workspace }}
+  node-version:
+    description: "Node.js version to use. Set to 'auto' to detect from .node-version or .nvmrc. Set to 'false' to skip Node.js setup."
+    required: false
+    default: "auto"
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+
+    - name: Detect Node.js version
+      id: detect_node
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        set -euo pipefail
+        if [[ "${{ inputs.node-version }}" == "auto" ]]; then
+          if [[ -f .node-version ]]; then
+            echo "version=$(cat .node-version | tr -d '[:space:]')" >> $GITHUB_OUTPUT
+          elif [[ -f .nvmrc ]]; then
+            echo "version=$(cat .nvmrc | tr -d '[:space:]')" >> $GITHUB_OUTPUT
+          else
+            echo "version=lts/*" >> $GITHUB_OUTPUT
+          fi
+        elif [[ "${{ inputs.node-version }}" == "false" ]]; then
+          echo "version=" >> $GITHUB_OUTPUT
+        else
+          echo "version=${{ inputs.node-version }}" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Setup Node.js
+      if: ${{ steps.detect_node.outputs.version != '' }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ steps.detect_node.outputs.version }}
+
+    - name: Determine package manager
+      id: pkg_manager
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: ${GITHUB_ACTION_PATH}/scripts/check-package-manager.sh >> $GITHUB_OUTPUT
+
+    - name: Install dependencies (npm)
+      if: ${{ steps.pkg_manager.outputs.manager == 'npm' }}
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: npm ci
+
+    - name: Install dependencies (yarn)
+      if: ${{ steps.pkg_manager.outputs.manager == 'yarn' }}
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: yarn install --frozen-lockfile
+
+    - name: Determine if ESLint should be executed
+      id: eslint_check
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: ${GITHUB_ACTION_PATH}/scripts/check-eslint.sh >> $GITHUB_OUTPUT
+      env:
+        WITH_ESLINT: "${{ inputs.eslint }}"
+
+    - name: Run ESLint
+      if: ${{ steps.eslint_check.outputs.should_run == 'true' }}
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: ${GITHUB_ACTION_PATH}/scripts/run-eslint.sh
+      env:
+        PACKAGE_MANAGER: "${{ steps.pkg_manager.outputs.manager }}"

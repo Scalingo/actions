@@ -1,0 +1,86 @@
+name: "Scalingo JavaScript/TypeScript tests GitHub Action"
+description: "Run JavaScript/TypeScript test suites"
+
+inputs:
+  working-directory:
+    description: "Change the working directory for the tests execution."
+    required: false
+    default: ${{ github.workspace }}
+  node-version:
+    description: "Node.js version to use. Set to 'auto' to detect from .node-version or .nvmrc."
+    required: false
+    default: "auto"
+  test-command:
+    description: "The test command to run. Default is 'test' (runs 'npm test' or 'yarn test')."
+    required: false
+    default: "test"
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v6
+      if: ${{ github.repository != 'Scalingo/actions' }}
+
+    - name: Detect Node.js version
+      id: detect_node
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        set -euo pipefail
+        if [[ "${{ inputs.node-version }}" == "auto" ]]; then
+          if [[ -f .node-version ]]; then
+            echo "version=$(cat .node-version | tr -d '[:space:]')" >> $GITHUB_OUTPUT
+          elif [[ -f .nvmrc ]]; then
+            echo "version=$(cat .nvmrc | tr -d '[:space:]')" >> $GITHUB_OUTPUT
+          else
+            echo "version=lts/*" >> $GITHUB_OUTPUT
+          fi
+        else
+          echo "version=${{ inputs.node-version }}" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ steps.detect_node.outputs.version }}
+
+    - name: "Set tests specific environment variables into the GitHub Action environment"
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        set -euo pipefail
+        test -f .env.test && grep -v '^#' .env.test >> "$GITHUB_ENV" || true
+
+    - name: Determine package manager
+      id: pkg_manager
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: ${GITHUB_ACTION_PATH}/scripts/check-package-manager.sh >> $GITHUB_OUTPUT
+
+    - name: Install dependencies (npm)
+      if: ${{ steps.pkg_manager.outputs.manager == 'npm' }}
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: npm ci
+
+    - name: Install dependencies (yarn)
+      if: ${{ steps.pkg_manager.outputs.manager == 'yarn' }}
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: yarn install --frozen-lockfile
+
+    - name: "Execute extra setup step"
+      if: ${{ hashFiles('bin/scalingo-ci-extra-setup.sh') != '' }}
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: bin/scalingo-ci-extra-setup.sh
+
+    - name: "Run tests"
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        if [[ "${{ steps.pkg_manager.outputs.manager }}" == "yarn" ]]; then
+          yarn ${{ inputs.test-command }}
+        else
+          npm run ${{ inputs.test-command }}
+        fi

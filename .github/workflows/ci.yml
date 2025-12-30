@@ -58,3 +58,17 @@ jobs:
 
       - name: Test the Go tests action
         run: ./test/go-tests/execution.sh mongodb-auto
+
+  js-linter-test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup the tests
+        run: ./test/js-linter/setup.sh
+
+      - name: Run JS linter action
+        uses: ./js-linter
+
+      - name: Test the JS linter action
+        run: ./test/js-linter/execution.sh
