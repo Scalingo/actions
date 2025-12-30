@@ -25,9 +25,11 @@ runs:
       id: detect_node
       shell: bash
       working-directory: ${{ inputs.working-directory }}
+      env:
+        NODE_VERSION_INPUT: ${{ inputs.node-version }}
       run: |
         set -euo pipefail
-        if [[ "${{ inputs.node-version }}" == "auto" ]]; then
+        if [[ "$NODE_VERSION_INPUT" == "auto" ]]; then
           if [[ -f .node-version ]]; then
             echo "version=$(cat .node-version | tr -d '[:space:]')" >> $GITHUB_OUTPUT
           elif [[ -f .nvmrc ]]; then
@@ -36,7 +38,7 @@ runs:
             echo "version=lts/*" >> $GITHUB_OUTPUT
           fi
         else
-          echo "version=${{ inputs.node-version }}" >> $GITHUB_OUTPUT
+          echo "version=$NODE_VERSION_INPUT" >> $GITHUB_OUTPUT
         fi
 
     - name: Setup Node.js
@@ -78,9 +80,12 @@ runs:
     - name: "Run tests"
       shell: bash
       working-directory: ${{ inputs.working-directory }}
+      env:
+        TEST_COMMAND: ${{ inputs.test-command }}
+        PKG_MANAGER: ${{ steps.pkg_manager.outputs.manager }}
       run: |
-        if [[ "${{ steps.pkg_manager.outputs.manager }}" == "yarn" ]]; then
-          yarn ${{ inputs.test-command }}
+        if [[ "$PKG_MANAGER" == "yarn" ]]; then
+          yarn "$TEST_COMMAND"
         else
-          npm run ${{ inputs.test-command }}
+          npm run "$TEST_COMMAND"
         fi

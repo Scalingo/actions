@@ -19,6 +19,7 @@ runs:
   using: "composite"
   steps:
     - uses: actions/checkout@v6
+      if: ${{ github.repository != 'Scalingo/actions' }}
       with:
         fetch-depth: 0
 
@@ -26,9 +27,11 @@ runs:
       id: detect_node
       shell: bash
       working-directory: ${{ inputs.working-directory }}
+      env:
+        NODE_VERSION_INPUT: ${{ inputs.node-version }}
       run: |
         set -euo pipefail
-        if [[ "${{ inputs.node-version }}" == "auto" ]]; then
+        if [[ "$NODE_VERSION_INPUT" == "auto" ]]; then
           if [[ -f .node-version ]]; then
             echo "version=$(cat .node-version | tr -d '[:space:]')" >> $GITHUB_OUTPUT
           elif [[ -f .nvmrc ]]; then
@@ -36,10 +39,10 @@ runs:
           else
             echo "version=lts/*" >> $GITHUB_OUTPUT
           fi
-        elif [[ "${{ inputs.node-version }}" == "false" ]]; then
+        elif [[ "$NODE_VERSION_INPUT" == "false" ]]; then
           echo "version=" >> $GITHUB_OUTPUT
         else
-          echo "version=${{ inputs.node-version }}" >> $GITHUB_OUTPUT
+          echo "version=$NODE_VERSION_INPUT" >> $GITHUB_OUTPUT
         fi
 
     - name: Setup Node.js
