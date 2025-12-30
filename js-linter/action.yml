@@ -51,6 +51,12 @@ runs:
       with:
         node-version: ${{ steps.detect_node.outputs.version }}
 
+    - name: "Execute extra setup step"
+      if: ${{ hashFiles('bin/scalingo-ci-extra-setup.sh') != '' }}
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: bin/scalingo-ci-extra-setup.sh
+
     - name: Determine package manager
       id: pkg_manager
       shell: bash
