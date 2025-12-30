@@ -73,7 +73,7 @@ runs:
       if: ${{ steps.pkg_manager.outputs.manager == 'yarn' }}
       shell: bash
       working-directory: ${{ inputs.working-directory }}
-      run: yarn install --frozen-lockfile
+      run: yarn install --frozen-lockfile --ignore-engines
 
     - name: Determine if ESLint should be executed
       id: eslint_check
