@@ -15,11 +15,17 @@ run_cmd() {
   fi
 }
 
+# Check if a script exists in package.json
+has_script() {
+  local script="$1"
+  [[ -f "package.json" ]] && jq -e ".scripts.\"$script\"" package.json > /dev/null 2>&1
+}
+
 # Determine which lint command to run
-if [[ -f "package.json" ]] && grep -q '"lint"' package.json; then
+if has_script "lint"; then
   echo "Running lint script from package.json..."
   run_cmd lint
-elif [[ -f "package.json" ]] && grep -q '"eslint"' package.json; then
+elif has_script "eslint"; then
   echo "Running eslint script from package.json..."
   run_cmd eslint
 else
