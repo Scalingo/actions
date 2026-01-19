@@ -1,0 +1,167 @@
+version: "2"
+run:
+  modules-download-mode: vendor
+  issues-exit-code: 1
+  tests: true
+output:
+  formats:
+    text:
+      path: stdout
+      print-linter-name: true
+      print-issued-lines: true
+      colors: true
+linters:
+  default: none
+  enable:
+    - bodyclose
+    - canonicalheader
+    - containedctx
+    - contextcheck
+    - dogsled
+    - embeddedstructfieldcheck
+    - errcheck
+    - errchkjson
+    - exptostd
+    - fatcontext
+    - goconst
+    - gocritic
+    - goprintffuncname
+    - govet
+    - iface
+    - importas
+    - inamedparam
+    - ineffassign
+    - iotamixing
+    - misspell
+    - modernize
+    - nakedret
+    - nestif
+    - nilnesserr
+    - noinlineerr
+    - nonamedreturns
+    - nosprintfhostport
+    - perfsprint
+    - reassign
+    - recvcheck
+    - sqlclosecheck
+    - staticcheck
+    - testifylint
+    - unconvert
+    - unparam
+    - unqueryvet
+    - usetesting
+    - whitespace
+  settings:
+    errcheck:
+      check-type-assertions: true
+      exclude-functions:
+        - encoding/json.Marshal
+        - encoding/json.MarshalIndent
+        - (*encoding/json.Encoder).Encode
+    errchkjson:
+      check-error-free-encoding: true
+      report-no-exported: true
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+    gocritic:
+      enabled-checks:
+        - appendCombine
+        - boolExprSimplify
+        - commentedOutCode
+        - dupImport
+        - emptyFallthrough
+        - emptyStringTest
+        - equalFold
+        - evalOrder
+        - hexLiteral
+        - indexAlloc
+        - initClause
+        - methodExprCall
+        - nestingReduce
+        - nilValReturn
+        - ptrToRefParam
+        - rangeExprCopy
+        - regexpPattern
+        - sloppyReassign
+        - stringXbytes
+        - truncateCmp
+        - typeAssertChain
+        - typeUnparen
+        - unnecessaryBlock
+        - weakCond
+        - yodaStyleExpr
+    gocyclo:
+      min-complexity: 10
+    govet:
+      settings:
+        printf:
+          funcs:
+            - (github.com/sirupsen/logrus.FieldLogger).Errorf
+            - (github.com/sirupsen/logrus.FieldLogger).Error
+            - (github.com/sirupsen/logrus.FieldLogger).Warnf
+            - (github.com/sirupsen/logrus.FieldLogger).Warn
+            - (github.com/sirupsen/logrus.FieldLogger).Infof
+            - (github.com/sirupsen/logrus.FieldLogger).Info
+            - (github.com/sirupsen/logrus.FieldLogger).Debugf
+            - (github.com/sirupsen/logrus.FieldLogger).Debug
+            - (github.com/Scalingo/go-scalingo/v6/debug).Printf
+            - (github.com/Scalingo/go-scalingo/v6/debug).Println
+    importas:
+      alias:
+        - pkg: go.etcd.io/etcd/client/v3
+          alias: etcdv3
+        - pkg: github.com/Scalingo/go-utils/etcd
+          alias: etcdutils
+        - pkg: errors
+          alias: stderrors
+        - pkg: github.com/Scalingo/go-utils/errors/v2
+          alias: ""
+        - pkg: github.com/Scalingo/go-plugins-helpers/v2/ipam
+          alias: dockerpluginsipam
+        - pkg: github.com/Scalingo/go-plugins-helpers/v2/network
+          alias: dockerpluginsnetwork
+        - pkg: github.com/Scalingo/go-plugins-helpers/v2/sdk
+          alias: dockerpluginssdk
+    nestif:
+      min-complexity: 7
+    usetesting:
+      context-background: true
+      context-todo: true
+      os-chdir: true
+      os-mkdir-temp: true
+      os-setenv: true
+      os-temp-dir: true
+      os-create-temp: true
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - contextcheck
+        path: (.+)_test\.go
+    paths:
+      - vendor
+      - third_party$
+      - builtin$
+      - examples$
+severity:
+  default: error
+formatters:
+  enable:
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/Scalingo
+  exclusions:
+    generated: lax
+    paths:
+      - vendor
+      - third_party$
+      - builtin$
+      - examples$
