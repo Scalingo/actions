@@ -11,3 +11,7 @@
 !.env.test
 # environment variables with secrets
 .env*.local
+
+# Python caches
+__pycache__/
+*.pyc
