@@ -1,0 +1,198 @@
+name: PR Description Compliance
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  compliance:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (for policy/template files)
+        uses: actions/checkout@v4
+
+      - name: Evaluate PR title/body vs policy+template (OpenAI + deterministic DoD check)
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+
+          TEMPLATE_FILE=".github/pull_request_template.md"
+          POLICY_FILE=".github/pr_compliance_policy.md"
+
+          if [ ! -f "$TEMPLATE_FILE" ]; then
+            echo "::error::Missing $TEMPLATE_FILE."
+            exit 1
+          fi
+          if [ ! -f "$POLICY_FILE" ]; then
+            echo "::error::Missing $POLICY_FILE."
+            exit 1
+          fi
+
+          python3 - << 'PY'
+          import json, os, re, sys, urllib.request
+
+          api_key = os.environ.get("OPENAI_API_KEY", "")
+          template = open(".github/pull_request_template.md", "r", encoding="utf-8").read()
+          policy = open(".github/pr_compliance_policy.md", "r", encoding="utf-8").read()
+          body = os.environ.get("PR_BODY", "") or ""
+          title = os.environ.get("PR_TITLE", "") or ""
+
+          if not body.strip():
+            print("::error::PR description is empty.")
+            sys.exit(1)
+
+          # -----------------------------
+          # Deterministic: DoD checklist
+          # -----------------------------
+          # If "Definition of Done" section exists in the PR body, require all checkboxes under it to be checked.
+          # We treat the section as running until the next H2 (## ) heading or end of text.
+          dod_heading_re = re.compile(r"^##\s+Definition of Done\s*$", re.IGNORECASE | re.MULTILINE)
+
+          if dod_heading_re.search(body):
+            # Extract section content
+            parts = dod_heading_re.split(body, maxsplit=1)
+            after = parts[1] if len(parts) > 1 else ""
+            # Stop at next H2 heading
+            after = re.split(r"^\s*##\s+", after, maxsplit=1, flags=re.MULTILINE)[0]
+
+            # Find markdown task list items
+            items = re.findall(r"^\s*-\s*\[(?P<mark>[ xX])\]\s+(?P<text>.+?)\s*$", after, flags=re.MULTILINE)
+            if not items:
+              print("::error::'Definition of Done' section is present but contains no checklist items.")
+              sys.exit(1)
+
+            unchecked = [text for mark, text in items if mark.strip() == ""]
+            if unchecked:
+              print("::error::Definition of Done checklist has unchecked items:")
+              for t in unchecked:
+                print(f" - {t}")
+              sys.exit(1)
+
+          # --------------------------------
+          # Deterministic: placeholders block
+          # --------------------------------
+          forbidden_placeholders = ["TBD", "TODO", "??"]
+          for token in forbidden_placeholders:
+            if re.search(rf"\b{re.escape(token)}\b", body, flags=re.IGNORECASE):
+              print(f"::error::Forbidden placeholder '{token}' found in PR description.")
+              sys.exit(1)
+
+          # --------------------------------
+          # LLM: policy/template compliance
+          # --------------------------------
+          if not api_key:
+            print("::error::Missing OPENAI_API_KEY secret.")
+            sys.exit(1)
+
+          prompt = f"""
+          You are a strict compliance checker for pull requests.
+
+          Evaluate the PR TITLE and PR DESCRIPTION against:
+          (1) The PR template (structure/sections)
+          (2) The PR compliance policy (rules)
+
+          TEMPLATE:
+          ---
+          {template}
+          ---
+
+          POLICY (source of truth for rules):
+          ---
+          {policy}
+          ---
+
+          PR TITLE:
+          ---
+          {title}
+          ---
+
+          PR DESCRIPTION:
+          ---
+          {body}
+          ---
+
+          IMPORTANT INTERPRETATION RULES:
+          - "N/A" is allowed only when accompanied by an explanation (at least one sentence).
+          - If policy and template conflict, policy wins.
+          - Be conservative: if something is unclear or missing, mark it as a violation.
+          - Return ONLY valid JSON matching the schema. No markdown, no extra text.
+
+          JSON SCHEMA (must match exactly):
+          {{
+            "pass": boolean,
+            "violations": [
+              {{
+                "id": string,
+                "severity": "error" | "warning",
+                "location": "title" | "description",
+                "message": string,
+                "suggested_fix": string
+              }}
+            ]
+          }}
+          """
+
+          payload = {
+            "model": "gpt-4o-mini",
+            "response_format": {"type": "json_object"},
+            "messages": [
+              {"role": "system", "content": "Return only JSON. No extra text."},
+              {"role": "user", "content": prompt}
+            ],
+            "temperature": 0
+          }
+
+          req = urllib.request.Request(
+            "https://api.openai.com/v1/chat/completions",
+            data=json.dumps(payload).encode("utf-8"),
+            headers={
+              "Authorization": f"Bearer {api_key}",
+              "Content-Type": "application/json",
+            },
+            method="POST",
+          )
+
+          try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+              data = json.loads(resp.read().decode("utf-8"))
+          except Exception as e:
+            print(f"::error::OpenAI request failed: {e}")
+            sys.exit(1)
+
+          content = data["choices"][0]["message"]["content"]
+          try:
+            result = json.loads(content)
+          except Exception:
+            print("::error::Model did not return valid JSON.")
+            print("Raw output:")
+            print(content)
+            sys.exit(1)
+
+          print("Compliance result:")
+          print(json.dumps(result, indent=2))
+
+          passed = bool(result.get("pass", False))
+          violations = result.get("violations", [])
+          error_violations = [v for v in violations if v.get("severity") == "error"]
+
+          if (not passed) or error_violations:
+            print("::error::PR failed compliance checks.")
+            for v in violations:
+              sev = v.get("severity", "error")
+              loc = v.get("location", "description")
+              msg = v.get("message", "")
+              fix = v.get("suggested_fix", "")
+              print(f"- [{sev}] ({loc}) {msg}")
+              if fix:
+                print(f"  suggested_fix: {fix}")
+            sys.exit(1)
+
+          print("PR passed compliance checks.")
+          PY
