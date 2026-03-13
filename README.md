@@ -76,3 +76,7 @@ Example of usage is presents in the `actions.yml` of each action
 GitHub action to automatically merge the Dependabot PRs. It merges the dependency upgrade if it upgrades a minor or patch version.
 
 See how it's used in the [go-project-template](https://github.com/Scalingo/go-project-template/blob/master/.github/workflows/dependabot.yml).
+
+## Import GPG key into the local agent
+
+GitHub Action to import a GPG key into the local agent, primarily used for signing Terraform provider releases.
