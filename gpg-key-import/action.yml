@@ -1,5 +1,5 @@
 name: "Import GPG"
-description: "Import GPG keys into the local agent to sign artifacts"
+description: "Import GPG key into the local agent"
 
 inputs:
   gpg-private-key:
