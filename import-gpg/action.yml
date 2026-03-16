@@ -14,6 +14,8 @@ runs:
   steps:
     - name: Import GPG key and prime passphrase
       shell: bash
+      # The subshell usage is designed to hide the private key from process listings and logs, even if Github already redacts it.
+      # On the second command, the `--passphrase-fd 0` serves a similar purpose for the passphrase.
       run: |
         gpg --batch --import <(printf '%s' "$GPG_PRIVATE_KEY")
         # Prime the passphrase cache by signing a temporary message
