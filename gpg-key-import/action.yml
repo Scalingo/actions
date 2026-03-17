@@ -1,0 +1,41 @@
+name: "Import GPG"
+description: "Import GPG key into the local agent"
+
+inputs:
+  gpg-private-key:
+    description: "ASCII-armored GPG private key to import"
+    required: true
+  passphrase:
+    description: "Passphrase for the GPG private key"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Import GPG key and prime passphrase
+      shell: bash
+      # The subshell usage is designed to hide the private key from process listings and logs, even if Github already redacts it.
+      # On the second command, the `--passphrase-fd 0` serves a similar purpose for the passphrase.
+      run: |
+        gpg --batch --import <(printf '%s' "$GPG_PRIVATE_KEY")
+        # Prime the passphrase cache by signing a temporary message
+        printf '%s' "$PASSPHRASE" | \
+          gpg --batch --yes -v \
+              --output /dev/null \
+              --pinentry-mode loopback \
+              --passphrase-fd 0 \
+              --detach-sig <(printf '%s\n' 'hello world')
+      env:
+        GPG_PRIVATE_KEY: ${{ inputs.gpg-private-key }}
+        PASSPHRASE: ${{ inputs.passphrase }}
+    - name: Set GPG fingerprint output
+      id: gpg-fingerprint
+      shell: bash
+      run: |
+        fingerprint="$(gpg --with-colons --list-keys | awk -F: '/^pub/ { print $5 }')"
+        echo "fingerprint=$fingerprint" >> $GITHUB_OUTPUT
+
+outputs:
+  fingerprint:
+    description: "Fingerprint of the GPG key (recommended as user ID)"
+    value: ${{ steps.gpg-fingerprint.outputs.fingerprint }}
