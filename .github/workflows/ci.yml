@@ -72,3 +72,19 @@ jobs:
 
       - name: Test the JS linter action
         run: ./test/js-linter/execution.sh
+
+  definition-of-done-test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Test definition-of-done action
+        run: ./definition-of-done/tests/run.sh
+
+  pull-request-compliance-test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Test pull-request-compliance action
+        run: ./pull-request-compliance/tests/run.sh
