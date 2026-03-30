@@ -118,6 +118,8 @@ linters:
         - pkg: errors
           alias: stderrors
         - pkg: github.com/Scalingo/go-utils/errors/v2
+          alias: "errorsv2"
+        - pkg: github.com/Scalingo/go-utils/errors/v3
           alias: ""
         - pkg: github.com/Scalingo/go-plugins-helpers/v2/ipam
           alias: dockerpluginsipam
