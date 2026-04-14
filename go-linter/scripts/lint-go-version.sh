@@ -74,7 +74,6 @@ function go_versions_match {
 
 # If the script is executed, execute the function.
 # This is the case when the script is executed via GitHub Action.
-# If the script is executed in CodeShip, we source and execute it in the `lint` script.
 if [[ "$0" = "${BASH_SOURCE[0]}" ]]; then
   if [[ -f Dockerfile ]]; then
     go_versions_match
