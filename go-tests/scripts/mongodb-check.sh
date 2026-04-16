@@ -26,8 +26,9 @@ if [[ "$WITH_MONGODB" == "false" ]]; then
   exit 0
 fi
 
-# Check if `github.com/Scalingo/go-utils/mongo` is used in the `go.mod`
-if grep "github.com/Scalingo/go-utils/mongo v" go.mod | grep -v "// indirect" > /dev/null; then
+# Check if `github.com/Scalingo/go-utils/mongo` is a direct dependency in the `go.mod`
+if grep --extended-regexp 'github.com/Scalingo/go-utils/mongo(/v[0-9]+)?' go.mod \
+  | grep --invert-match --extended-regexp --quiet "// indirect$"; then
   echo "should_start=true"
   exit 0
 fi

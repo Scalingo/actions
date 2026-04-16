@@ -2,6 +2,21 @@
 
 ## To be Released
 
+## v2.0.0
+
+* feat(document): `Validate` returns an `error` [BREAKING CHANGE]
+* feat(document): remove unused `ValidateWithInternalError` [BREAKING CHANGE]
+
+## v1.5.3
+
+* build(deps): update `github.com/Scalingo/go-utils/errors` from v2 to v3
+* refactor: replace `github.com/pkg/errors` with `github.com/Scalingo/go-utils/errors/v3`
+* chore(deps): bump several dependencies
+
+## v1.5.2
+
+* fix(mongo): log at error level if failed to connect to MongoDB
+
 ## v1.5.1
 
 * chore(go): corrective bump - Go version regression from 1.24.3 to 1.24
