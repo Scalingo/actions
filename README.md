@@ -71,6 +71,13 @@ Two actions are present to release services which are go binaries:
 
 Example of usage is presents in the `actions.yml` of each action
 
+## Pull Request Governance
+
+Two actions are available for pull request quality gates:
+
+- [definition-of-done](/definition-of-done): validate that all checklist items are checked when a `Definition of Done` section is present in the PR body.
+- [pull-request-compliance](/pull-request-compliance): validate PR title/body compliance with deterministic checks and optional OpenAI policy/template validation.
+
 ## Automatically Merge Dependabot Pull Requests
 
 GitHub action to automatically merge the Dependabot PRs. It merges the dependency upgrade if it upgrades a minor or patch version.
