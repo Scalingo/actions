@@ -79,7 +79,6 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Run Go lint action
-        id: gotests
         uses: ./go-linter
         with:
           working-directory: test/go-linter
