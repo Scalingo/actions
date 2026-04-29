@@ -30,6 +30,7 @@ runs:
     # Execute the `lint-go-version` script
     - name: Download the lint-go-version script
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
       run: ${GITHUB_ACTION_PATH}/scripts/lint-go-version.sh
       env:
         working_directory: ${{ inputs.working-directory }}
@@ -61,6 +62,7 @@ runs:
     - name: "Configure modules download mode"
       shell: bash
       id: check_vendor
+      working-directory: ${{ inputs.working-directory }}
       run: |
         if [[ ! -d vendor ]]; then
           echo "modules_download_mode=--modules-download-mode=mod" >> $GITHUB_OUTPUT
@@ -69,8 +71,8 @@ runs:
     - name: "Execute golangci-lint on a pull request"
       uses: Scalingo/golangci-lint-action@v9
       with:
-        working-directory: ${{ matrix.modules }}
+        working-directory: ${{ inputs.working-directory }}
         # The `only-new-issues` flag is not working (https://github.com/golangci/golangci-lint-action/issues/531).
         # We rather decided to use the suggestion from the FAQ (https://golangci-lint.run/docs/welcome/faq/#how-to-integrate-golangci-lint-into-a-large-project-with-thousands-of-issues) and use `--new-from-rev`
         # only-new-issues: false
-        args: "--config=$(pwd)/.golangci.yml --new-from-rev=${{ github.event.pull_request.base.sha }} ${{ steps.check_vendor.outputs.modules_download_mode }}"
+        args: "--config=.golangci.yml --new-from-rev=${{ github.event.pull_request.base.sha }} ${{ steps.check_vendor.outputs.modules_download_mode }}"
