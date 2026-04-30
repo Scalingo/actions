@@ -72,3 +72,13 @@ jobs:
 
       - name: Test the JS linter action
         run: ./test/js-linter/execution.sh
+
+  go-linter:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Run Go lint action
+        uses: ./go-linter
+        with:
+          working-directory: test/go-linter
