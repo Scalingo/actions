@@ -1,6 +1,6 @@
 module go-linter
 
-go 1.26.2
+go 1.25
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
