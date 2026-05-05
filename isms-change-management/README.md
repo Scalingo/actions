@@ -10,6 +10,7 @@ It checks that:
 4. **RSSI role** *(optional)* — the RSSI must be a validator, with a specific exception when the RSSI is the author
 5. **Commit authors** — every git commit author touching the file must be declared in the document's `authors` field
 6. **PR reviewer coherence** *(optional)* — the `validators` field must exactly match the set of GitHub PR approvers
+7. **Version matches content change** — the version bump level (patch/minor/major) must reflect the actual nature of the content change
 
 ## Usage
 
@@ -42,7 +43,7 @@ jobs:
 | `rssi`          | no       | `""` | Comma-separated full name(s) of the RSSI holder(s). When set, enables the RSSI role check. |
 | `cto`           | no       | `""` | Comma-separated full name(s) of the CTO(s). Used when `rssi` is set. |
 | `ceo`           | no       | `""` | Comma-separated full name(s) of the CEO(s). Used when `rssi` is set. |
-| `github-token`  | no       | `""` | GitHub token. When set together with `pr-number`, enables the PR reviewer coherence check. |
+| `github-token`  | no       | `""` | GitHub token. When set together with `pr-number`, enables the PR reviewer coherence check and posts a summary comment on the PR. |
 | `pr-number`     | no       | `""` | Pull request number. Required when `github-token` is provided. |
 
 > `fetch-depth: 0` is required in the `actions/checkout` step so that git history is available for the base-ref comparison.
@@ -191,3 +192,69 @@ validators:
 validators:
   - Bob Dupont
 ```
+
+### 7. Version Matches Content Change
+
+The version bump level must reflect the actual nature of the content change, as defined by the security policy:
+
+| Content change | Required bump | Detection rule |
+|----------------|---------------|----------------|
+| Cosmetic / wording corrections | patch | fewer than 50 % of body lines changed, no heading change |
+| Article or heading added / removed | **at least minor** | a heading line (`#…`) was added or removed |
+| Substantial rewrite | **major** | more than 50 % of non-empty body lines changed |
+
+A higher bump than required is always acceptable (e.g. bumping major for what is technically a minor change is fine). Only bumping *lower* than the content warrants is an error.
+
+**Triggers an error when** the content change qualifies as minor or major but the version bump does not reach that level.
+
+```yaml
+# Body diff: 60 % of lines changed → classified as major
+# ❌ Error: only a patch bump for a major content change
+version: 1.0.1   # was 1.0.0
+
+# ✅ OK: major bump matches major content change
+version: 2.0.0   # was 1.0.0
+```
+
+## PR Comment
+
+When `github-token` and `pr-number` are provided, the action posts (or updates) a single comment on the pull request summarising the result of every check for every changed ISMS document.
+
+### All checks passed
+
+> ## ISMS Change Management Compliance
+>
+> ### ✅ `isms/access-control/ISMS-Access-Control-Policy.md` — patch bump (1.3.0 → 1.3.1) — content change: **patch**
+>
+> - ✅ Author ≠ Validator
+> - ✅ Version bumped
+> - ✅ Double validation
+> - ✅ Version matches content change
+> - ✅ RSSI role
+> - ✅ Commit authors coherence
+> - ✅ PR reviewer coherence
+>
+> ---
+>
+> **Overall result: ✅ All checks passed.**
+
+### Some checks failed
+
+> ## ISMS Change Management Compliance
+>
+> ### ❌ `isms/change-management/ISMS-Change-Management-Policy.md` — patch bump (2.1.0 → 2.1.1) — content change: **minor**
+>
+> - ✅ Author ≠ Validator
+> - ✅ Version bumped
+> - ✅ Double validation
+> - ❌ **Version matches content change**: Content change classified as **minor** (an article or heading was added or removed), but the version was only bumped as patch (2.1.0 → 2.1.1). A minor bump is required by the security policy.
+> - ✅ RSSI role
+> - ✅ Commit authors coherence
+> - ❌ **PR reviewer coherence**: 'Carol Lefèvre' is listed as a validator but has not approved the PR on GitHub. Actual approvers: Bob Dupont
+>
+> ---
+>
+> **Overall result: ❌ Some checks failed. See details above.**
+
+The comment is updated in place on each new push, so the PR always shows the latest status without accumulating duplicate comments.
+

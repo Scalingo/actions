@@ -13,6 +13,11 @@
 #                            listed in the document's authors field
 #   6. PR reviewer coherence — YAML validators and actual GitHub PR approvers
 #                            must match (enabled when GITHUB_TOKEN + PR_NUMBER set)
+#   7. Version matches content — the version bump level (patch/minor/major) must
+#                            match the nature of the content change:
+#                            major → >50 % of body lines rewritten
+#                            minor → a heading was added or removed
+#                            patch → cosmetic / wording corrections only
 #
 # Environment variables:
 #   BASE_REF          — base branch ref (optional; falls back to merge-base with origin/main)
@@ -20,7 +25,8 @@
 #   RSSI              — comma-separated name(s) of the RSSI holder(s)
 #   CTO               — comma-separated name(s) of the CTO(s)
 #   CEO               — comma-separated name(s) of the CEO(s)
-#   GITHUB_TOKEN      — GitHub token; enables PR reviewer coherence check when set
+#   GITHUB_TOKEN      — GitHub token; enables PR reviewer coherence check and PR
+#                       comment posting when set together with PR_NUMBER
 #   PR_NUMBER         — pull request number; required when GITHUB_TOKEN is set
 #   GITHUB_REPOSITORY — set automatically by GitHub Actions (owner/repo)
 
@@ -48,6 +54,53 @@ def parse_front_matter(content)
   YAML.safe_load(yaml_block, permitted_classes: [])
 rescue Psych::Exception
   nil
+end
+
+# Return everything after the closing front matter delimiter, or the full
+# string when no front matter is present.
+def strip_front_matter(content)
+  return content.to_s unless content.to_s.start_with?("---")
+
+  end_index = content.index("\n---", 3)
+  return content.to_s unless end_index
+
+  # Skip "\n---" (4 chars) plus the newline that follows the closing delimiter.
+  body_start = end_index + 4
+  body_start += 1 if content[body_start] == "\n"
+  content[body_start..]
+end
+
+# Extract headings (lines beginning with one or more `#`) from a document,
+# stripping the front matter first.
+def extract_headings(content)
+  strip_front_matter(content).lines.select { |l| l.match?(/\A#+\s/) }.map(&:strip)
+end
+
+# Classify the nature of a content change between two document versions.
+# Returns :major, :minor, or :patch according to the security policy:
+#   :major — more than 50 % of the non-empty body lines were changed
+#   :minor — at least one heading was added or removed
+#   :patch — cosmetic / wording corrections only
+def classify_content_change(old_content, new_content)
+  old_lines = strip_front_matter(old_content).lines.reject { |l| l.strip.empty? }
+  new_lines = strip_front_matter(new_content).lines.reject { |l| l.strip.empty? }
+
+  old_tally = old_lines.tally
+  new_tally = new_lines.tally
+
+  removed = old_tally.sum { |line, count| [count - (new_tally[line] || 0), 0].max }
+  added   = new_tally.sum { |line, count| [count - (old_tally[line] || 0), 0].max }
+
+  total_old = [old_lines.size, 1].max
+  ratio = (removed + added).to_f / total_old
+
+  if ratio > 0.5
+    :major
+  elsif extract_headings(old_content) != extract_headings(new_content)
+    :minor
+  else
+    :patch
+  end
 end
 
 # Compare two semver strings.
@@ -156,8 +209,30 @@ def check_double_validation(file, old_front_matter, new_front_matter)
    "but only #{validators.size} found: #{validators.join(", ").then { |s| s.empty? ? "(none)" : s }}"]
 end
 
-# Check 4: RSSI must validate, unless RSSI is the author (then CTO or CEO must validate).
-# Only runs when rssi_names is non-empty.
+# Check 7: The version bump level must match the nature of the content change.
+#   :major content change (>50 % of body lines changed) → must be a major bump
+#   :minor content change (a heading added or removed)   → must be at least a minor bump
+#   :patch content change (cosmetic only)                → any bump is acceptable
+def check_version_matches_content_change(file, old_front_matter, new_front_matter, content_kind)
+  old_version = old_front_matter["version"].to_s
+  new_version = new_front_matter["version"].to_s
+  actual_bump = bump_kind(old_version, new_version)
+
+  bump_rank = { none: 0, patch: 1, minor: 2, major: 3 }
+  return [] if bump_rank[actual_bump] >= bump_rank[content_kind]
+
+  description = case content_kind
+                when :major then "more than 50% of the content was rewritten"
+                when :minor then "an article or heading was added or removed"
+                else "cosmetic corrections only"
+                end
+
+  ["Content change classified as **#{content_kind}** (#{description}), " \
+   "but the version was only bumped as #{actual_bump} (#{old_version} → #{new_version}). " \
+   "A #{content_kind} bump is required by the security policy."]
+end
+
+
 def check_rssi_role(file, front_matter, rssi_names, cto_names, ceo_names)
   return [] if rssi_names.empty?
 
@@ -229,22 +304,36 @@ end
 # GitHub API
 # ---------------------------------------------------------------------------
 
-def github_api_get(token, path)
+COMMENT_MARKER = "<!-- isms-change-management -->"
+
+def github_api_request(method, token, path, payload = nil)
   uri = URI("https://api.github.com#{path}")
-  req = Net::HTTP::Get.new(uri)
-  req["Authorization"] = "Bearer #{token}"
-  req["Accept"] = "application/vnd.github+json"
+  req = case method
+        when :post  then Net::HTTP::Post.new(uri)
+        when :patch then Net::HTTP::Patch.new(uri)
+        else             Net::HTTP::Get.new(uri)
+        end
+  req["Authorization"]       = "Bearer #{token}"
+  req["Accept"]              = "application/vnd.github+json"
   req["X-GitHub-Api-Version"] = "2022-11-28"
+  if payload
+    req["Content-Type"] = "application/json"
+    req.body = payload.to_json
+  end
 
   response = Net::HTTP.start(uri.host, uri.port, use_ssl: true) { |http| http.request(req) }
   unless response.is_a?(Net::HTTPSuccess)
-    warn "::warning::GitHub API #{path} returned HTTP #{response.code}"
+    warn "::warning::GitHub API #{method.upcase} #{path} returned HTTP #{response.code}"
     return nil
   end
   JSON.parse(response.body)
 rescue StandardError => e
   warn "::warning::GitHub API request failed for #{path}: #{e.message}"
   nil
+end
+
+def github_api_get(token, path)
+  github_api_request(:get, token, path)
 end
 
 # Fetch a GitHub user's display name, falling back to their login.
@@ -278,6 +367,65 @@ def fetch_pr_approved_reviewer_names(token, repository, pr_number)
   approver_logins.map { |login| fetch_github_display_name(token, login) }
 end
 
+# Build a markdown PR comment summarising all per-file check results.
+# Each entry in file_results is a Hash with:
+#   :file, :passed, :checks, :actual_bump, :old_version, :new_version, :content_kind
+def build_pr_comment(file_results)
+  lines = [COMMENT_MARKER, "## ISMS Change Management Compliance", ""]
+
+  file_results.each do |result|
+    file         = result[:file]
+    actual_bump  = result[:actual_bump]
+    old_ver      = result[:old_version]
+    new_ver      = result[:new_version]
+    content_kind = result[:content_kind]
+    file_ok      = result[:passed]
+
+    heading_parts = ["`#{file}`"]
+    if actual_bump && actual_bump != :none && old_ver && new_ver
+      heading_parts << "#{actual_bump} bump (#{old_ver} → #{new_ver})"
+    end
+    heading_parts << "content change: **#{content_kind}**" if content_kind
+
+    status_icon = file_ok ? "✅" : "❌"
+    lines << "### #{status_icon} #{heading_parts.join(" — ")}"
+    lines << ""
+
+    result[:checks].each do |check|
+      if check[:passed]
+        lines << "- ✅ #{check[:name]}"
+      else
+        check[:errors].each { |err| lines << "- ❌ **#{check[:name]}**: #{err}" }
+      end
+    end
+
+    lines << ""
+  end
+
+  overall_passed = file_results.all? { |r| r[:passed] }
+  lines << "---"
+  lines << ""
+  lines << if overall_passed
+             "**Overall result: ✅ All checks passed.**"
+           else
+             "**Overall result: ❌ Some checks failed. See details above.**"
+           end
+  lines.join("\n")
+end
+
+# Post a new PR comment or update the existing one left by this action.
+def post_or_update_pr_comment(token, repository, pr_number, body)
+  comments = github_api_get(token, "/repos/#{repository}/issues/#{pr_number}/comments")
+  return unless comments
+
+  existing = comments.find { |c| c["body"].to_s.start_with?(COMMENT_MARKER) }
+  if existing
+    github_api_request(:patch, token, "/repos/#{repository}/issues/comments/#{existing["id"]}", { body: body })
+  else
+    github_api_request(:post, token, "/repos/#{repository}/issues/#{pr_number}/comments", { body: body })
+  end
+end
+
 def resolve_base_ref
   base_ref = ENV.fetch("BASE_REF", "").strip
   return base_ref unless base_ref.empty?
@@ -288,20 +436,23 @@ def resolve_base_ref
 end
 
 def commit_authors_for_file(file, base_ref)
-  `git log "#{base_ref}..HEAD" --format="%an" -- "#{file}" 2>/dev/null`
+  # base_ref..HEAD is a single git revision-range argument; no shell is involved (array form).
+  IO.popen(["git", "log", "#{base_ref}..HEAD", "--format=%an", "--", file], err: File::NULL) { |io| io.read } # nosemgrep: ruby.lang.security.dangerous-exec.dangerous-exec
     .split("\n").map(&:strip).reject(&:empty?).uniq
 end
 
 def changed_files(base_ref)
-  `git diff --name-only "#{base_ref}" HEAD 2>/dev/null`.split("\n").map(&:strip).reject(&:empty?)
+  IO.popen(["git", "diff", "--name-only", base_ref, "HEAD"], err: File::NULL) { |io| io.read }
+    .split("\n").map(&:strip).reject(&:empty?)
 end
 
 def file_exists_in_base?(file, base_ref)
-  system("git cat-file -e \"#{base_ref}:#{file}\" 2>/dev/null")
+  system("git", "cat-file", "-e", "#{base_ref}:#{file}", out: File::NULL, err: File::NULL)
 end
 
 def read_base_content(file, base_ref)
-  `git show "#{base_ref}:#{file}" 2>/dev/null`
+  # base_ref:file is a single git object specifier argument; no shell is involved (array form).
+  IO.popen(["git", "show", "#{base_ref}:#{file}"], err: File::NULL) { |io| io.read } # nosemgrep: ruby.lang.security.dangerous-exec.dangerous-exec
 end
 
 def matches_pattern?(file, pattern)
@@ -332,20 +483,25 @@ def main
 
   puts "Checking #{isms_files.size} changed ISMS document(s) against base #{base_ref}..."
 
+  can_post_comment = !github_token.empty? && !pr_number.empty? && !repository.empty?
+
   # Fetch PR approved reviewers once (nil means check is disabled).
   approved_reviewer_names =
-    if !github_token.empty? && !pr_number.empty? && !repository.empty?
+    if can_post_comment
       puts "Fetching PR ##{pr_number} review data from GitHub..."
       fetch_pr_approved_reviewer_names(github_token, repository, pr_number)
     end
 
-  all_errors = []
+  all_errors   = []
+  file_results = []
 
   isms_files.each do |file|
     new_content = File.read(file, encoding: "utf-8") rescue nil
     unless new_content
       error(file, "Cannot read file #{file}")
       all_errors << file
+      file_results << { file: file, passed: false, checks: [], actual_bump: nil,
+                        old_version: nil, new_version: nil, content_kind: nil }
       next
     end
 
@@ -355,37 +511,70 @@ def main
       next
     end
 
+    file_checks = []
     file_errors = []
 
+    run_check = lambda do |name, errors|
+      file_checks << { name: name, passed: errors.empty?, errors: errors }
+      file_errors.concat(errors)
+    end
+
     # Check 1: authors and validators must be disjoint
-    file_errors += check_author_validator_coherence(file, new_fm)
+    run_check.call("Author ≠ Validator", check_author_validator_coherence(file, new_fm))
+
+    old_fm       = nil
+    actual_bump  = nil
+    content_kind = nil
 
     if file_exists_in_base?(file, base_ref)
       base_content = read_base_content(file, base_ref)
       old_fm = parse_front_matter(base_content)
 
       if old_fm
+        actual_bump  = bump_kind(old_fm["version"].to_s, new_fm["version"].to_s)
+        content_kind = classify_content_change(base_content, new_content)
+
         # Check 2: version bump
-        file_errors += check_version_bump(file, old_fm, new_fm)
+        run_check.call("Version bumped", check_version_bump(file, old_fm, new_fm))
 
         # Check 3: double validation for minor/major
-        file_errors += check_double_validation(file, old_fm, new_fm)
+        run_check.call("Double validation", check_double_validation(file, old_fm, new_fm))
+
+        # Check 7: version bump level must match content change classification
+        run_check.call("Version matches content change",
+                       check_version_matches_content_change(file, old_fm, new_fm, content_kind))
       end
     else
       puts "::notice file=#{file}::New document — version and double-validation checks skipped."
     end
 
     # Check 4: RSSI role (optional)
-    file_errors += check_rssi_role(file, new_fm, rssi_names, cto_names, ceo_names)
+    run_check.call("RSSI role", check_rssi_role(file, new_fm, rssi_names, cto_names, ceo_names))
 
     # Check 5: git commit authors must all be listed in the document's authors field
-    file_errors += check_commit_authors_coherence(file, new_fm, commit_authors_for_file(file, base_ref))
+    run_check.call("Commit authors coherence",
+                   check_commit_authors_coherence(file, new_fm, commit_authors_for_file(file, base_ref)))
 
     # Check 6: YAML validators must match actual GitHub PR approvers (optional)
-    file_errors += check_validators_are_approvers(file, new_fm, approved_reviewer_names)
+    run_check.call("PR reviewer coherence",
+                   check_validators_are_approvers(file, new_fm, approved_reviewer_names))
 
     file_errors.each { |msg| error(file, msg) }
     all_errors.concat(file_errors)
+
+    file_results << {
+      file:         file,
+      passed:       file_errors.empty?,
+      checks:       file_checks,
+      actual_bump:  actual_bump,
+      old_version:  old_fm&.[]("version"),
+      new_version:  new_fm["version"],
+      content_kind: content_kind
+    }
+  end
+
+  if can_post_comment && !file_results.empty?
+    post_or_update_pr_comment(github_token, repository, pr_number, build_pr_comment(file_results))
   end
 
   if all_errors.empty?
