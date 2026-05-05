@@ -8,6 +8,8 @@ It checks that:
 2. **Version is bumped** — the document version must be strictly increased
 3. **Double validation** — minor or major version bumps require at least 2 validators
 4. **RSSI role** *(optional)* — the RSSI must be a validator, with a specific exception when the RSSI is the author
+5. **Commit authors** — every git commit author touching the file must be declared in the document's `authors` field
+6. **PR reviewer coherence** *(optional)* — the `validators` field must exactly match the set of GitHub PR approvers
 
 ## Usage
 
@@ -27,6 +29,8 @@ jobs:
           rssi: "Yannick Jost"
           cto: "Léo Unbekandt"
           ceo: "Frédéric Harper"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
 ```
 
 ## Inputs
@@ -38,6 +42,8 @@ jobs:
 | `rssi`          | no       | `""` | Comma-separated full name(s) of the RSSI holder(s). When set, enables the RSSI role check. |
 | `cto`           | no       | `""` | Comma-separated full name(s) of the CTO(s). Used when `rssi` is set. |
 | `ceo`           | no       | `""` | Comma-separated full name(s) of the CEO(s). Used when `rssi` is set. |
+| `github-token`  | no       | `""` | GitHub token. When set together with `pr-number`, enables the PR reviewer coherence check. |
+| `pr-number`     | no       | `""` | Pull request number. Required when `github-token` is provided. |
 
 > `fetch-depth: 0` is required in the `actions/checkout` step so that git history is available for the base-ref comparison.
 
@@ -136,6 +142,52 @@ validators:
 # ❌ Error: RSSI is not author and not validator
 authors:
   - Alice Martin
+validators:
+  - Bob Dupont
+```
+
+### 5. Commit Authors Coherence
+
+Every person who authors a git commit touching an ISMS document must be listed in that document's `authors` field. This ensures the declared authorship in the front matter reflects reality — you cannot silently modify a document without declaring yourself as an author.
+
+**Triggers an error when** a commit author name (from `git log`) is not found in the document's `authors` list. Name matching is case-insensitive.
+
+```yaml
+# git log shows: Alice Martin committed on this file
+# ❌ Error: Alice is not in authors
+authors:
+  - Bob Dupont
+validators:
+  - Yannick Jost
+
+# ✅ OK
+authors:
+  - Alice Martin
+validators:
+  - Yannick Jost
+```
+
+### 6. PR Reviewer Coherence *(enabled when `github-token` + `pr-number` are set)*
+
+The `validators` field must match the set of GitHub users who have actually approved the pull request. This check is **bidirectional**:
+
+- Every YAML `validator` must have approved the PR on GitHub — you cannot claim someone validated your change if they did not.
+- Every GitHub approver must be listed as a `validator` — all actual approvals must be documented.
+
+Name matching is case-insensitive and uses the GitHub user's display name (falling back to their login if no display name is set).
+
+**Triggers an error when:**
+- A name in `validators` has not approved the PR, or
+- A GitHub approver is not listed in `validators`.
+
+```yaml
+# PR approved by: Bob Dupont
+
+# ❌ Error: Carol listed but did not approve; Bob approved but not listed
+validators:
+  - Carol Lefèvre
+
+# ✅ OK
 validators:
   - Bob Dupont
 ```

@@ -212,3 +212,89 @@ class TestParseFrontMatter < Minitest::Test
     assert_nil parse_front_matter("---\ntitle: Test\n")
   end
 end
+
+class TestNormalizeName < Minitest::Test
+  def test_case_insensitive_match
+    assert name_in_list?("Yannick Jost", ["yannick jost"])
+    assert name_in_list?("YANNICK JOST", ["Yannick Jost"])
+  end
+
+  def test_extra_whitespace_normalized
+    assert name_in_list?("Yannick  Jost", ["Yannick Jost"])
+    assert name_in_list?("Yannick Jost", ["Yannick  Jost"])
+  end
+
+  def test_no_match
+    refute name_in_list?("Alice Martin", ["Bob Dupont", "Carol Lefèvre"])
+  end
+end
+
+class TestCommitAuthorsCoherence < Minitest::Test
+  def test_all_authors_listed_passes
+    fm = { "authors" => ["Alice Martin", "Bob Dupont"] }
+    assert_empty check_commit_authors_coherence("file.md", fm, ["Alice Martin"])
+  end
+
+  def test_unlisted_commit_author_fails
+    fm = { "authors" => ["Alice Martin"] }
+    errors = check_commit_authors_coherence("file.md", fm, ["Alice Martin", "Bob Dupont"])
+    refute_empty errors
+    assert_match(/Bob Dupont/, errors.first)
+  end
+
+  def test_name_matching_is_case_insensitive
+    fm = { "authors" => ["alice martin"] }
+    assert_empty check_commit_authors_coherence("file.md", fm, ["Alice Martin"])
+  end
+
+  def test_empty_commit_authors_skips_check
+    fm = { "authors" => ["Alice Martin"] }
+    assert_empty check_commit_authors_coherence("file.md", fm, [])
+  end
+
+  def test_multiple_unlisted_authors_reported
+    fm = { "authors" => ["Alice Martin"] }
+    errors = check_commit_authors_coherence("file.md", fm, ["Bob Dupont", "Carol Lefèvre"])
+    assert_equal 2, errors.size
+  end
+end
+
+class TestValidatorsAreApprovers < Minitest::Test
+  def test_validators_match_approvers_passes
+    fm = { "validators" => ["Bob Dupont"] }
+    assert_empty check_validators_are_approvers("file.md", fm, ["Bob Dupont"])
+  end
+
+  def test_nil_approved_reviewers_skips_check
+    fm = { "validators" => ["Bob Dupont"] }
+    assert_empty check_validators_are_approvers("file.md", fm, nil)
+  end
+
+  def test_yaml_validator_not_in_approvers_fails
+    fm = { "validators" => ["Bob Dupont"] }
+    errors = check_validators_are_approvers("file.md", fm, ["Carol Lefèvre"])
+    assert errors.any? { |e| e.include?("Bob Dupont") && e.include?("not approved") }
+  end
+
+  def test_approver_not_in_yaml_validators_fails
+    fm = { "validators" => ["Bob Dupont"] }
+    errors = check_validators_are_approvers("file.md", fm, ["Bob Dupont", "Carol Lefèvre"])
+    assert errors.any? { |e| e.include?("Carol Lefèvre") && e.include?("not listed as a validator") }
+  end
+
+  def test_bidirectional_mismatch_reports_both
+    fm = { "validators" => ["Bob Dupont"] }
+    errors = check_validators_are_approvers("file.md", fm, ["Carol Lefèvre"])
+    assert_equal 2, errors.size
+  end
+
+  def test_name_matching_is_case_insensitive
+    fm = { "validators" => ["bob dupont"] }
+    assert_empty check_validators_are_approvers("file.md", fm, ["Bob Dupont"])
+  end
+
+  def test_empty_validators_and_approvers_passes
+    fm = { "validators" => [] }
+    assert_empty check_validators_are_approvers("file.md", fm, [])
+  end
+end

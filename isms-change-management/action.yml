@@ -22,6 +22,14 @@ inputs:
     description: "Comma-separated full name(s) of the CEO(s). Used when rssi is set."
     required: false
     default: ""
+  github-token:
+    description: "GitHub token for API access. When set together with pr-number, enables PR reviewer coherence check (Check 6)."
+    required: false
+    default: ""
+  pr-number:
+    description: "Pull request number. Required when github-token is provided."
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -34,4 +42,6 @@ runs:
         RSSI: ${{ inputs.rssi }}
         CTO: ${{ inputs.cto }}
         CEO: ${{ inputs.ceo }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        PR_NUMBER: ${{ inputs.pr-number }}
       run: ruby "${GITHUB_ACTION_PATH}/scripts/check_isms_change.rb"
