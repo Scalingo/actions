@@ -82,3 +82,11 @@ jobs:
         uses: ./go-linter
         with:
           working-directory: test/go-linter
+
+  isms-change-management:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Run ISMS change management action tests
+        run: bash isms-change-management/tests/run.sh
