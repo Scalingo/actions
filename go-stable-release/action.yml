@@ -25,13 +25,18 @@ description: "Create tag and stable release based on the name of the branch, pat
 #     steps:
 #       - uses: Scalingo/actions/go-stable-release@main
 #         with:
-#           - github_token=secrets.GITHUB_TOKEN
+#           github_token: ${{ secrets.GITHUB_TOKEN }}
+#           working-directory: "."
 #
 
 inputs:
   github_token:
     description: "GitHub token for API access. It is used to create tag and release."
     required: true
+  working-directory:
+    description: "Directory containing go.mod and release metadata files (VERSION, .release/target_sha, .goreleaser-prod.yml)."
+    required: false
+    default: "."
 
 runs:
   using: composite
@@ -43,12 +48,13 @@ runs:
         fetch-depth: 0
     - uses: actions/setup-go@v6
       with:
-        go-version-file: "go.mod"
+        go-version-file: "${{ inputs.working-directory }}/go.mod"
         check-latest: true
 
     - name: Read Release metadata
       id: meta
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
       run: |
         set -euo pipefail
         test -f VERSION || { echo "VERSION missing"; exit 1; }
@@ -83,6 +89,7 @@ runs:
       with:
         version: '~> v2'
         args: release --config .goreleaser-prod.yml --clean
+        workdir: "${{ inputs.working-directory }}"
       env:
         GORELEASER_CURRENT_TAG: ${{ steps.meta.outputs.tag }}
         GITHUB_TOKEN: ${{ inputs.github_token }}
