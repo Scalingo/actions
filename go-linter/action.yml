@@ -6,6 +6,14 @@ inputs:
     description: "Install sqlc if needed. Possible values: true | false | auto"
     required: false
     default: "auto"
+  golangci-lint-version:
+    description: "Version of golangci-lint to use"
+    required: false
+    default: ""
+  minimum-golangci-lint-version:
+    description: "Internal baseline for golangci-lint version checks. Do not override unless coordinated across repositories."
+    required: false
+    default: "v2.8.0"
   working-directory:
     description: "Change the working directory for the tests execution. This must only be used if the Go code is not at the root of the repository. The default value should work for 99.9% of the projects."
     required: false
@@ -68,11 +76,32 @@ runs:
           echo "modules_download_mode=--modules-download-mode=mod" >> $GITHUB_OUTPUT
         fi
 
+    - name: "Resolve golangci-lint version"
+      id: golangci_lint_version
+      shell: bash
+      env:
+        MIN_SUPPORTED_VERSION: "${{ inputs.minimum-golangci-lint-version }}"
+        REQUESTED_VERSION: "${{ inputs.golangci-lint-version }}"
+      run: |
+        min_supported_version="$MIN_SUPPORTED_VERSION"
+        requested_version="$REQUESTED_VERSION"
+
+        if [[ -z "$requested_version" ]]; then
+          resolved_version="$min_supported_version"
+        elif [[ "$(printf '%s\n' "$min_supported_version" "$requested_version" | sort -V | head -n1)" != "$min_supported_version" ]]; then
+          echo "::error::Invalid golangci-lint version '$requested_version'. Only '$min_supported_version' or newer is allowed."
+          exit 1
+        else
+          resolved_version="$requested_version"
+        fi
+
+        echo "version=$resolved_version" >> "$GITHUB_OUTPUT"
+
     - name: "Execute golangci-lint on a pull request"
       uses: Scalingo/golangci-lint-action@v9
       with:
         working-directory: ${{ inputs.working-directory }}
-        version: v2.8.0
+        version: ${{ steps.golangci_lint_version.outputs.version }}
         # The `only-new-issues` flag is not working (https://github.com/golangci/golangci-lint-action/issues/531).
         # We rather decided to use the suggestion from the FAQ (https://golangci-lint.run/docs/welcome/faq/#how-to-integrate-golangci-lint-into-a-large-project-with-thousands-of-issues) and use `--new-from-rev`
         # only-new-issues: false
