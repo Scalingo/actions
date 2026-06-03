@@ -72,7 +72,7 @@ runs:
       uses: Scalingo/golangci-lint-action@v9
       with:
         working-directory: ${{ inputs.working-directory }}
-        version: v2.12.2
+        version: v2.12
         # The `only-new-issues` flag is not working (https://github.com/golangci/golangci-lint-action/issues/531).
         # We rather decided to use the suggestion from the FAQ (https://golangci-lint.run/docs/welcome/faq/#how-to-integrate-golangci-lint-into-a-large-project-with-thousands-of-issues) and use `--new-from-rev`
         # only-new-issues: false
