@@ -5,37 +5,23 @@ description: |
   Scans all .sh file in the repo, and reports errors whose severity is info or
   above.
 
-on:
-  pull_request:
-  workflow_dispatch:
-  push:
-    branches: [feat/shellcheck, main, master, prod]
-
-# The list of permissions is explained on the GitHub doc:
-# https://docs.github.com/en/actions/using-jobs/assigning-permissions-to-jobs
-permissions:
-  actions: read
-  contents: read
-
 inputs:
   shellcheck-version:
     description: ShellCheck version
     required: false
     default: "0.11.0"
 
-jobs:
-  shellcheck:
-    name: "ShellCheck"
-    runs-on: ubuntu-latest
-    steps:
-      - name: Install shellcheck
-        shell: bash
-        run: |
-          curl --silent --location --remote-name https://github.com/koalaman/shellcheck/releases/download/v${{ inputs.shellcheck-version }}/shellcheck-v${{ inputs.shellcheck-version }}.linux.x86_64.tar.xz
-          tar --extract --xz --file shellcheck-v${{ inputs.shellcheck-version }}.linux.x86_64.tar.xz --directory /tmp
-          sudo mv /tmp/shellcheck-v${{ inputs.shellcheck-version }}/shellcheck /usr/local/bin/
-      - name: Run shellcheck
-        shell: bash
-        run: |
-          find . -name "*.sh" -exec shellcheck -S info -s bash {} +
+runs:
+  using: "composite"
+  steps:
+    - name: Install shellcheck
+      shell: bash
+      run: |
+        curl --silent --location --remote-name https://github.com/koalaman/shellcheck/releases/download/v${{ inputs.shellcheck-version }}/shellcheck-v${{ inputs.shellcheck-version }}.linux.x86_64.tar.xz
+        tar --extract --xz --file shellcheck-v${{ inputs.shellcheck-version }}.linux.x86_64.tar.xz --directory /tmp
+        sudo mv /tmp/shellcheck-v${{ inputs.shellcheck-version }}/shellcheck /usr/local/bin/
+    - name: Run shellcheck
+      shell: bash
+      run: |
+        find . -name "*.sh" -exec shellcheck -S info -s bash {} +
 ...
