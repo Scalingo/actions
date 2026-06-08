@@ -1,0 +1,39 @@
+---
+name: ShellCheck GitHub Action
+description: |
+  Execute ShellCheck in a GitHub Action.
+  Scans all .sh file in the repo, and reports errors whose severity is info or
+  above.
+
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    branches: [feat/shellcheck, main, master, prod]
+
+# The list of permissions is explained on the GitHub doc:
+# https://docs.github.com/en/actions/using-jobs/assigning-permissions-to-jobs
+permissions:
+  actions: read
+  contents: read
+
+env:
+  SHELLCHECK_VERSION: "0.11.0"
+
+jobs:
+  shellcheck:
+    name: "ShellCheck"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install shellcheck
+        shell: bash
+        run: |
+          curl --silent --location --remote-name https://github.com/koalaman/shellcheck/releases/download/v${SHELLCHECK_VERSION}/shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz
+          tar --extract --xz --file shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz --directory /tmp
+          sudo mv /tmp/shellcheck-v${SHELLCHECK_VERSION}/shellcheck /usr/local/bin/
+      - name: Run shellcheck
+        shell: bash
+        run: |
+          find . -name "*.sh" -exec shellcheck -S info -s bash {} +
+...
