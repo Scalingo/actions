@@ -16,10 +16,12 @@ runs:
   steps:
     - name: Install shellcheck
       shell: bash
-      run: |
-        curl --silent --location --remote-name https://github.com/koalaman/shellcheck/releases/download/v${{ inputs.shellcheck-version }}/shellcheck-v${{ inputs.shellcheck-version }}.linux.x86_64.tar.xz
-        tar --extract --xz --file shellcheck-v${{ inputs.shellcheck-version }}.linux.x86_64.tar.xz --directory /tmp
-        sudo mv /tmp/shellcheck-v${{ inputs.shellcheck-version }}/shellcheck /usr/local/bin/
+env:
+  SHELLCHECK_VERSION: ${{ inputs.shellcheck-version }}
+run: |
+  curl --silent --location --remote-name "https://github.com/koalaman/shellcheck/releases/download/v$SHELLCHECK_VERSION/shellcheck-v$SHELLCHECK_VERSION.linux.x86_64.tar.xz"
+  tar --extract --xz --file "shellcheck-v$SHELLCHECK_VERSION.linux.x86_64.tar.xz" --directory /tmp
+  sudo mv "/tmp/shellcheck-v$SHELLCHECK_VERSION/shellcheck" /usr/local/bin/
     - name: Run shellcheck
       shell: bash
       run: |
