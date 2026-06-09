@@ -23,9 +23,16 @@ inputs:
     description: |
       List of files to scan.
       When unset, defaults to recursively scanning all .sh files in the repo.
+      Use the following syntax to specify a list of files:
+
+          with:
+            files: |
+              first.sh
+              second file.sh
+              third file
+
     required: false
     default: ""
-
 
 runs:
   using: "composite"
