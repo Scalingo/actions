@@ -26,6 +26,11 @@ inputs:
     required: false
     default: ""
 
+env:
+  FILES: ${{ inputs.files }}
+  SEVERITY: ${{ inputs.shellcheck-severity }}
+  VERSION: ${{ inputs.shellcheck-version }}
+
 runs:
   using: "composite"
   steps:
@@ -34,31 +39,31 @@ runs:
       shell: bash
       run: |
         docker run --rm \
-          --volume "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" \
-          --workdir "$GITHUB_WORKSPACE" \
-          koalaman/shellcheck-alpine:${{ inputs.shellcheck-version }} \
-          sh -c <<'SCRIPT'
+            --env FILES \
+            --env  SEVERITY \
+            --volume "${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE}" \
+            --workdir "${GITHUB_WORKSPACE}" \
+            koalaman/shellcheck-alpine:${VERSION} \
+            sh -s <<'SCRIPT'
 
-          set -o errexit
-          set -o nounset"
-          cd "${GITHUB_WORKSPACE}"
+        set -o errexit
+        set -o nounset"
 
-          severity="${{ inputs.shellcheck-severity }}"
-          files="${{ inputs.files }}"
+        cd "${GITHUB_WORKSPACE}"
 
-          if [ -n "${files}" ]; then
-              set --
+        if [ -n "${FILES}" ]; then
+            set --
 
-              while IFS= read -r file; do
-                  [ -n "${file}" ] && set -- "$@" "${file}"
-              done <<EOF
-              ${files}
-              EOF
+            while IFS= read -r file; do
+                [ -n "${file}" ] && set -- "$@" "${file}"
+            done <<EOF
+            ${FILES}
+            EOF
 
-              shellcheck -S "${severity}" -s bash "$@"
-          else
-              find . -type f -name '*.sh' -not -path './.git/*' \
-                  -exec shellcheck -S "${severity}" -s bash {} +
-          fi
+            shellcheck -S "${SEVERITY}" -s bash "$@"
+        else
+            find . -type f -name '*.sh' -not -path './.git/*' \
+                -exec shellcheck -S "${SEVERITY}" -s bash {} +
+        fi
 
-          SCRIPT
+        SCRIPT
