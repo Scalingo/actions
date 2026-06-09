@@ -2,18 +2,8 @@
 name: ShellCheck GitHub Action
 description: |
   Execute ShellCheck in a GitHub Action.
-  Scans all .sh file in the repo, and reports errors whose severity is info or
-  above.
 
 inputs:
-  shellcheck-version:
-    description: |
-      ShellCheck version to use. This should match a Docker Hub tag.
-      See https://hub.docker.com/r/koalaman/shellcheck/tags for a list of
-      available tags.
-    required: false
-    default: "v0.11.0"
-
   shellcheck-severity:
     description: |
       ShellCheck severity to use.
@@ -30,7 +20,7 @@ inputs:
 
 runs:
   using: "docker"
-  image: "koalaman/shellcheck:${{ inputs.shellcheck-version }}"
+  image: "docker://koalaman/shellcheck:v0.11.0"
   entrypoint: /bin/sh
   args:
     - -c
@@ -38,7 +28,7 @@ runs:
       set -o errexit
       set -o nounset
 
-      cd /github/workspace
+      cd "${GITHUB_WORKSPACE:-/github/workspace}"
 
       if [ -n "${{ inputs.files }}" ]; then
           # Empty argv ($@):
