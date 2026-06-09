@@ -7,23 +7,54 @@ description: |
 
 inputs:
   shellcheck-version:
-    description: ShellCheck version
+    description: |
+      ShellCheck version to use. This should match a Docker Hub tag.
+      See https://hub.docker.com/r/koalaman/shellcheck/tags for a list of
+      available tags.
     required: false
-    default: "0.11.0"
+    default: "v0.11.0"
+
+  shellcheck-severity:
+    description: |
+      ShellCheck severity to use.
+      One of 'error', 'warning', 'info', or 'style'.
+    required: false
+    default: style
+
+  files:
+    description: |
+      List of files to scan.
+      When unset, defaults to recursively scanning all .sh files in the repo.
+    required: false
+    default: ""
 
 runs:
-  using: "composite"
-  steps:
-    - name: Install shellcheck
-      shell: bash
-env:
-  SHELLCHECK_VERSION: ${{ inputs.shellcheck-version }}
-run: |
-  curl --silent --location --remote-name "https://github.com/koalaman/shellcheck/releases/download/v$SHELLCHECK_VERSION/shellcheck-v$SHELLCHECK_VERSION.linux.x86_64.tar.xz"
-  tar --extract --xz --file "shellcheck-v$SHELLCHECK_VERSION.linux.x86_64.tar.xz" --directory /tmp
-  sudo mv "/tmp/shellcheck-v$SHELLCHECK_VERSION/shellcheck" /usr/local/bin/
-    - name: Run shellcheck
-      shell: bash
-      run: |
-        find . -name "*.sh" -exec shellcheck -S info -s bash {} +
+  using: "docker"
+  image: "koalaman/shellcheck:${{ inputs.shellcheck-version }}"
+  entrypoint: /bin/sh
+  args:
+    - -c
+    - |
+      set -o errexit
+      set -o nounset
+
+      cd /github/workspace
+
+      if [ -n "${{ inputs.files }}" ]; then
+          # Empty argv ($@):
+          set --
+
+          # Fill argv with the given files. Preserves spaces in filenames:
+          while IFS= read -r file; do
+              set -- "$@" "$file"
+          done <<'EOF'
+          ${{ inputs.files }}
+          EOF
+
+          # Call ShellCheck with input files:
+          shellcheck -S "${{ inputs.shellcheck-severity }}" -s bash "$@"
+      else
+          find . -type f -name '*.sh' -not -path './.git/*' -exec \
+            shellcheck -S "${{ inputs.shellcheck-severity }}" -s bash {} +
+      fi
 ...
