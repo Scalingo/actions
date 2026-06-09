@@ -20,7 +20,7 @@ inputs:
 
 runs:
   using: "docker"
-  image: "docker://koalaman/shellcheck:v0.11.0"
+  image: "docker://koalaman/shellcheck-alpine:v0.11.0"
   entrypoint: /bin/sh
   args:
     - -c
