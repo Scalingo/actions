@@ -23,7 +23,6 @@ linters:
     - errchkjson
     - exptostd
     - fatcontext
-    - goconst
     - gocritic
     - goprintffuncname
     - govet
