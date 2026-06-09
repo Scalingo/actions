@@ -4,6 +4,14 @@ description: |
   Execute ShellCheck in a GitHub Action.
 
 inputs:
+  shellcheck-version:
+    description: |
+      ShellCheck version to use. This should match a Docker Hub tag.
+      See https://hub.docker.com/r/koalaman/shellcheck/tags for a list of
+      available tags.
+    required: false
+    default: "v0.11.0"
+
   shellcheck-severity:
     description: |
       ShellCheck severity to use.
@@ -19,32 +27,38 @@ inputs:
     default: ""
 
 runs:
-  using: "docker"
-  image: "docker://koalaman/shellcheck-alpine:v0.11.0"
-  entrypoint: /bin/sh
-  args:
-    - -c
-    - |
-      set -o errexit
-      set -o nounset
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v5
+    - name: Run ShellCheck
+      shell: bash
+      run: |
+        docker run --rm \
+          --volume "$GITHUB_WORKSPACE:$GITHUB_WORKSPACE" \
+          --workdir "$GITHUB_WORKSPACE" \
+          koalaman/shellcheck-alpine:${{ inputs.shellcheck-version }} \
+          sh -c <<'SCRIPT'
 
-      cd "${GITHUB_WORKSPACE:-/github/workspace}"
+          set -o errexit
+          set -o nounset"
+          cd "${GITHUB_WORKSPACE}"
 
-      if [ -n "${{ inputs.files }}" ]; then
-          # Empty argv ($@):
-          set --
+          severity="${{ inputs.shellcheck-severity }}"
+          files="${{ inputs.files }}"
 
-          # Fill argv with the given files. Preserves spaces in filenames:
-          while IFS= read -r file; do
-              set -- "$@" "$file"
-          done <<'EOF'
-          ${{ inputs.files }}
-          EOF
+          if [ -n "${files}" ]; then
+              set --
 
-          # Call ShellCheck with input files:
-          shellcheck -S "${{ inputs.shellcheck-severity }}" -s bash "$@"
-      else
-          find . -type f -name '*.sh' -not -path './.git/*' -exec \
-            shellcheck -S "${{ inputs.shellcheck-severity }}" -s bash {} +
-      fi
-...
+              while IFS= read -r file; do
+                  [ -n "${file}" ] && set -- "$@" "${file}"
+              done <<EOF
+              ${files}
+              EOF
+
+              shellcheck -S "${severity}" -s bash "$@"
+          else
+              find . -type f -name '*.sh' -not -path './.git/*' \
+                  -exec shellcheck -S "${severity}" -s bash {} +
+          fi
+
+          SCRIPT
