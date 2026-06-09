@@ -26,17 +26,20 @@ inputs:
     required: false
     default: ""
 
-env:
-  FILES: ${{ inputs.files }}
-  SEVERITY: ${{ inputs.shellcheck-severity }}
-  VERSION: ${{ inputs.shellcheck-version }}
 
 runs:
   using: "composite"
   steps:
     - uses: actions/checkout@v5
+
     - name: Run ShellCheck
       shell: bash
+
+      env:
+        FILES: ${{ inputs.files }}
+        SEVERITY: ${{ inputs.shellcheck-severity }}
+        VERSION: ${{ inputs.shellcheck-version }}
+
       run: |
         docker run --rm \
             --env FILES \
