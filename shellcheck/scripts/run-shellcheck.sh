@@ -3,8 +3,6 @@
 set -o errexit
 set -o nounset
 
-cd "${GITHUB_WORKSPACE}"
-
 if [ -n "${FILES}" ]; then
 	# Reset argv ($@):
 	set --
