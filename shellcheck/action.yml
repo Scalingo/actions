@@ -41,39 +41,16 @@ runs:
 
     - name: Run ShellCheck
       shell: bash
-
       env:
         FILES: ${{ inputs.files }}
         SEVERITY: ${{ inputs.shellcheck-severity }}
         VERSION: ${{ inputs.shellcheck-version }}
-
       run: |
         docker run --rm \
             --env FILES \
-            --env  SEVERITY \
-            --volume "${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE}" \
+            --env SEVERITY \
+            --volume "${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE}:ro" \
+            --volume "${GITHUB_ACTION_PATH}:${GITHUB_ACTION_PATH}:ro" \
             --workdir "${GITHUB_WORKSPACE}" \
             koalaman/shellcheck-alpine:${VERSION} \
-            sh -s <<'SCRIPT'
-
-        set -o errexit
-        set -o nounset"
-
-        cd "${GITHUB_WORKSPACE}"
-
-        if [ -n "${FILES}" ]; then
-            set --
-
-            while IFS= read -r file; do
-                [ -n "${file}" ] && set -- "$@" "${file}"
-            done <<EOF
-            ${FILES}
-            EOF
-
-            shellcheck -S "${SEVERITY}" -s bash "$@"
-        else
-            find . -type f -name '*.sh' -not -path './.git/*' \
-                -exec shellcheck -S "${SEVERITY}" -s bash {} +
-        fi
-
-        SCRIPT
+            /bin/sh "${GITHUB_ACTION_PATH}/scripts/run-shellcheck.sh"
