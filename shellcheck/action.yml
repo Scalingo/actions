@@ -1,0 +1,56 @@
+---
+name: ShellCheck GitHub Action
+description: |
+  Execute ShellCheck in a GitHub Action.
+
+inputs:
+  shellcheck-version:
+    description: |
+      ShellCheck version to use. This should match a Docker Hub tag.
+      See https://hub.docker.com/r/koalaman/shellcheck/tags for a list of
+      available tags.
+    required: false
+    default: "v0.11.0"
+
+  shellcheck-severity:
+    description: |
+      ShellCheck severity to use.
+      One of 'error', 'warning', 'info', or 'style'.
+    required: false
+    default: style
+
+  files:
+    description: |
+      List of files to scan.
+      When unset, defaults to recursively scanning all .sh files in the repo.
+      Use the following syntax to specify a list of files:
+
+          with:
+            files: |
+              first.sh
+              second file.sh
+              third file
+
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v5
+
+    - name: Run ShellCheck
+      shell: bash
+      env:
+        FILES: ${{ inputs.files }}
+        SEVERITY: ${{ inputs.shellcheck-severity }}
+        VERSION: ${{ inputs.shellcheck-version }}
+      run: |
+        docker run --rm \
+            --env FILES \
+            --env SEVERITY \
+            --volume "${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE}:ro" \
+            --volume "${GITHUB_ACTION_PATH}:${GITHUB_ACTION_PATH}:ro" \
+            --workdir "${GITHUB_WORKSPACE}" \
+            koalaman/shellcheck-alpine:${VERSION} \
+            /bin/sh "${GITHUB_ACTION_PATH}/scripts/run-shellcheck.sh"
