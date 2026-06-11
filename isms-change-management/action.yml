@@ -1,0 +1,47 @@
+name: "ISMS Change Management Compliance"
+description: "Validate ISMS document changes: author/validator coherence, version bump, and role-based validation rules"
+
+inputs:
+  base-ref:
+    description: "Base branch ref to compare against (e.g. 'main'). Defaults to the merge-base of HEAD and origin/main."
+    required: false
+    default: ""
+  files-pattern:
+    description: "Glob pattern for ISMS markdown documents to check"
+    required: false
+    default: "isms/**/*.md"
+  rssi:
+    description: "Comma-separated full name(s) of the RSSI holder(s). When set, enables the RSSI role check."
+    required: false
+    default: ""
+  cto:
+    description: "Comma-separated full name(s) of the CTO(s). Used when rssi is set."
+    required: false
+    default: ""
+  ceo:
+    description: "Comma-separated full name(s) of the CEO(s). Used when rssi is set."
+    required: false
+    default: ""
+  github-token:
+    description: "GitHub token for API access. When set together with pr-number, enables PR reviewer coherence check (Check 6)."
+    required: false
+    default: ""
+  pr-number:
+    description: "Pull request number. Required when github-token is provided."
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check ISMS change management compliance
+      shell: bash
+      env:
+        BASE_REF: ${{ inputs.base-ref }}
+        FILES_PATTERN: ${{ inputs.files-pattern }}
+        RSSI: ${{ inputs.rssi }}
+        CTO: ${{ inputs.cto }}
+        CEO: ${{ inputs.ceo }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        PR_NUMBER: ${{ inputs.pr-number }}
+      run: ruby "${GITHUB_ACTION_PATH}/scripts/check_isms_change.rb"
