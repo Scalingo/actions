@@ -15,7 +15,10 @@ function go_versions_match {
   local go_version_gomod
   go_version_gomod=$(go list -m -json -mod=readonly | jq --raw-output "select(.Main == true) | .GoVersion")
   local go_version_dockerfile
-  go_version_dockerfile=$(grep "FROM golang:" < Dockerfile | cut -d ":" -f 2)
+  # Example of FROM lines:
+  # FROM golang:1.26
+  # FROM golang:1.26 AS builder
+  go_version_dockerfile=$(grep "FROM golang:" < Dockerfile | cut -d ":" -f 2 | cut -d ' ' -f1)
 
   local go_major_version_gomod go_minor_version_gomod go_patch_version_gomod
   go_major_version_gomod="$(echo "$go_version_gomod" | cut -d "." -f1)"
