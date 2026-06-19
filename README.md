@@ -95,11 +95,11 @@ Two inputs are available:
 
 - `files` (opt):\
   Allows to specify the path to the files to scan.\
-  Paths must be given relative to the repository root direcory.\
+  Paths must be given relative to the repository root directory.\
   They must be seperated by a newline.\
   Spaces are preserved.\
-  Defaults to scanning all `.sh` files in the repository, except those in the
-  `.git` directory.
+  Defaults to all `.sh` files in the repository, except those in the `.git`
+  directory.
 
 Here is an example:
 
