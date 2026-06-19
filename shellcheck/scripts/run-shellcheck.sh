@@ -5,21 +5,17 @@ set -o nounset
 
 if [ -n "${FILES}" ]; then
 	# Reset argv ($@):
-	set --
-
-	# Fill argv with the files provided. Keeps spaces.
-	while IFS= read -r file; do
-		[ -n "${file}" ] && set -- "$@" "${file}"
-	done <<-EOF
-	${FILES}
-	EOF
+	# FILES is newline-separated and globbing is allowed.
+	# Spaces in filenames are intentionally not supported.
+	# shellcheck disable=SC2086
+	set -- ${FILES}
 
 	# Run ShellCheck
-	shellcheck -S "${SEVERITY}" -s bash "$@"
+	shellcheck --severity="${SEVERITY}" --shell=bash -- "$@"
 else
 	# Default behavior
 	# Finds all .sh files and pass them to ShellCheck.
 	# Ignores those in the `.git` directory.
 	find . -type f -name '*.sh' -not -path './.git/*' \
-		-exec shellcheck -S "${SEVERITY}" -s bash {} +
+		-exec shellcheck --severity="${SEVERITY}" --shell=bash -- {} +
 fi

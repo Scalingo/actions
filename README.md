@@ -87,12 +87,12 @@ The ShellCheck Github action allows to run ShellCheck on a repository.
 
 Available inputs:
 
-- `shellcheck-version` (opt):\
+- `version` (opt):\
   Allows to specify the version of ShellCheck to use.\
   Must be a valid [Docker Hub release tag](https://hub.docker.com/r/koalaman/shellcheck/tags).\
   Defaults to `v0.11.0`
 
-- `shellcheck-severity` (opt):\
+- `severity` (opt):\
   Allows to specify the minimum severity of errors to consider.\
   Valid values in order of severity are: `error`, `warning`, `info` and
   `style`.\
@@ -102,7 +102,6 @@ Available inputs:
   Allows to specify the path to the files to scan.\
   Paths must be given relative to the repository root directory.\
   They must be seperated by a newline.\
-  Spaces are preserved.\
   Defaults to all `.sh` files in the repository, except those in the `.git`
   directory.
 
@@ -116,9 +115,9 @@ jobs:
     steps:
       - uses: Scalingo/actions/shellcheck@main
         with:
-          shellcheck-severity: style
+          severity: style
           files: |
             first_file.sh
-            second file.sh
-            third
+            second/*.sh
+            third.sh
 ```

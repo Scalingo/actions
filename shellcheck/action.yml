@@ -4,7 +4,7 @@ description: |
   Execute ShellCheck in a GitHub Action.
 
 inputs:
-  shellcheck-version:
+  version:
     description: |
       ShellCheck version to use. This should match a Docker Hub tag.
       See https://hub.docker.com/r/koalaman/shellcheck/tags for a list of
@@ -12,7 +12,7 @@ inputs:
     required: false
     default: "v0.11.0"
 
-  shellcheck-severity:
+  severity:
     description: |
       ShellCheck severity to use.
       One of 'error', 'warning', 'info', or 'style'.
@@ -23,13 +23,13 @@ inputs:
     description: |
       List of files to scan.
       When unset, defaults to recursively scanning all .sh files in the repo.
+      Each line may be a literal path or a glob expression.
       Use the following syntax to specify a list of files:
 
           with:
             files: |
               first.sh
-              second file.sh
-              third file
+              second/*.sh
 
     required: false
     default: ""
@@ -43,8 +43,8 @@ runs:
       shell: bash
       env:
         FILES: ${{ inputs.files }}
-        SEVERITY: ${{ inputs.shellcheck-severity }}
-        VERSION: ${{ inputs.shellcheck-version }}
+        SEVERITY: ${{ inputs.severity }}
+        VERSION: ${{ inputs.version }}
       run: |
         docker run --rm \
             --env FILES \
