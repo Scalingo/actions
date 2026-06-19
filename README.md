@@ -80,3 +80,40 @@ See how it's used in the [go-project-template](https://github.com/Scalingo/go-pr
 ## Import GPG key into the local agent
 
 GitHub Action to import a GPG key into the local agent, primarily used for signing Terraform provider releases.
+
+## ShellCheck
+
+The ShellCheck Github action allows to run ShellCheck on a repository.
+
+Two inputs are available:
+
+- `shellcheck-severity` (opt):\
+  Allows to specify the minimum severity of errors to consider.\
+  Valid values in order of severity are: `error`, `warning`, `info` and
+  `style`.\
+  Defaults to `style`.
+
+- `files` (opt):\
+  Allows to specify the path to the files to scan.\
+  Paths must be given relative to the repository root direcory.\
+  They must be seperated by a newline.\
+  Spaces are preserved.\
+  Defaults to scanning all `.sh` files in the repository, except those in the
+  `.git` directory.
+
+Here is an example:
+
+```yaml
+jobs:
+  shellcheck:
+    name: "ShellCheck"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: Scalingo/actions/shellcheck@main
+        with:
+          shellcheck-severity: style
+          files: |
+            first_file.sh
+            second file.sh
+            third
+```
