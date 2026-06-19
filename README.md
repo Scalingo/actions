@@ -85,7 +85,12 @@ GitHub Action to import a GPG key into the local agent, primarily used for signi
 
 The ShellCheck Github action allows to run ShellCheck on a repository.
 
-Two inputs are available:
+Available inputs:
+
+- `shellcheck-version` (opt):\
+  Allows to specify the version of ShellCheck to use.\
+  Must be a valid [Docker Hub release tag](https://hub.docker.com/r/koalaman/shellcheck/tags).\
+  Defaults to `v0.11.0`
 
 - `shellcheck-severity` (opt):\
   Allows to specify the minimum severity of errors to consider.\
