@@ -82,3 +82,11 @@ jobs:
         uses: ./go-linter
         with:
           working-directory: test/go-linter
+
+  shellcheck:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Test the ShellCheck action
+        run: ./test/shellcheck/execution.sh
