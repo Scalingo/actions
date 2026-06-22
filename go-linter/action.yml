@@ -46,7 +46,7 @@ runs:
       if: ${{ steps.sqlc_check.outputs.configuration_file != '' }}
       shell: bash
       run: |
-        go install "github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0"
+        go install "github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1"
         sqlc diff --file $SQLC_CONFIGURATION_FILE
       env:
         SQLC_CONFIGURATION_FILE: "${{ steps.sqlc_check.outputs.configuration_file }}"
