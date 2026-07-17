@@ -85,6 +85,13 @@ runs:
       shell: bash
       run: bundle exec rspec
 
+    - name: Upload Pact artifacts
+      if: ${{ steps.pact_check.outputs.should_run == 'true' }}
+      uses: actions/upload-artifact@v5
+      with:
+        name: pacts
+        path: spec/pacts
+
     - name: Upload SimpleCov Report
       uses: actions/upload-artifact@v5
       with:
