@@ -87,13 +87,13 @@ runs:
 
     - name: Upload Pact artifacts
       if: ${{ steps.pact_check.outputs.should_run == 'true' }}
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v5.0.0
       with:
         name: pacts
         path: spec/pacts
 
     - name: Upload SimpleCov Report
-    uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v5.0.0
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v5.0.0
       with:
         name: coverage-report
         path: coverage/
