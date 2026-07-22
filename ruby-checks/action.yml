@@ -1,5 +1,5 @@
 name: "Scalingo Ruby Specs GitHub Action"
-description: "Execute Ruby specs with code coverage in a GitHub Action"
+description: "Execute Ruby checks (lint) in a GitHub Action"
 
 inputs:
   rubocop:
