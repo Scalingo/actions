@@ -3,17 +3,15 @@ description: "Execute Ruby specs with code coverage in a GitHub Action"
 
 inputs:
   mongodb:
-    description: "Start MongoDB if needed. Possible values: true | false | auto"
+    description: "Start MongoDB if needed. Possible values: true | false | auto. MongoDB is a document database that can be used by the test suite"
     required: false
     default: "auto"
   redis:
-    description: "Start Redis if needed. Possible values: true | false | auto"
+    description: "Start Redis if needed. Possible values: true | false | auto. Redis is an in-memory data store that can be used by the test suite"
     required: false
     default: "auto"
-  # Pact is a contract testing tool for ensuring that services can communicate with each other correctly. 
-  # The Pact verification ensures that the contracts between services are valid.
   pact:
-    description: "Execute Pact verification if needed. Possible values: true | false | auto"
+    description: "Execute Pact verification if needed. Possible values: true | false | auto. Pact is a contract testing tool for ensuring that services can communicate with each other correctly. The Pact verification ensures that the contracts between services are valid"
     required: false
     default: "auto"
   github_token:
