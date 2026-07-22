@@ -1,29 +1,26 @@
 name: "Scalingo Ruby Specs GitHub Action"
-description: "Execute Ruby specs with code coverage in a GitHub Action"
+description: "Execute Ruby checks (lint) in a GitHub Action"
 
 inputs:
-  # Rubocop is a linter for Ruby code
   rubocop:
-    description: "Execute RuboCop if needed. Possible values: true | false | auto"
+    description: "Execute RuboCop if needed. Possible values: true | false | auto. RuboCop is a linter for Ruby code"
     required: false
     default: "auto"
-  # Brakeman is a static analysis security vulnerability scanner for Ruby on Rails applications
   brakeman:
-    description: "Execute Brakeman if needed. Possible values: true | false | auto"
+    description: "Execute Brakeman if needed. Possible values: true | false | auto. Brakeman is a static analysis security vulnerability scanner for Ruby on Rails applications"
     required: false
     default: "auto"
-  # Zeitwerk is a code loader for Ruby applications. The Zeitwerk check ensures that the code will be loaded correctly at runtime.
   zeitwerk:
-    description: "Execute Zeitwerk check if needed. Possible values: true | false | auto"
+    description: "Execute Zeitwerk check if needed. Possible values: true | false | auto. Zeitwerk is a code loader for Ruby applications. The Zeitwerk check ensures that the code will be loaded correctly at runtime"
     required: false
     default: "auto"
 
 runs:
   using: "composite"
   steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.0
 
-    - uses: ruby/setup-ruby@v1
+    - uses: ruby/setup-ruby@9eb537ca036ebaed86729dcb9309076e4c5c3b74 # v1.314.0
       with:
         bundler-cache: true
 

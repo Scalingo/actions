@@ -3,17 +3,15 @@ description: "Execute Ruby specs with code coverage in a GitHub Action"
 
 inputs:
   mongodb:
-    description: "Start MongoDB if needed. Possible values: true | false | auto"
+    description: "Start MongoDB if needed. Possible values: true | false | auto. MongoDB is a document database that can be used by the test suite"
     required: false
     default: "auto"
   redis:
-    description: "Start Redis if needed. Possible values: true | false | auto"
+    description: "Start Redis if needed. Possible values: true | false | auto. Redis is an in-memory data store that can be used by the test suite"
     required: false
     default: "auto"
-  # Pact is a contract testing tool for ensuring that services can communicate with each other correctly. 
-  # The Pact verification ensures that the contracts between services are valid.
   pact:
-    description: "Execute Pact verification if needed. Possible values: true | false | auto"
+    description: "Execute Pact verification if needed. Possible values: true | false | auto. Pact is a contract testing tool for ensuring that services can communicate with each other correctly. The Pact verification ensures that the contracts between services are valid"
     required: false
     default: "auto"
   github_token:
@@ -23,9 +21,9 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.0
 
-    - uses: ruby/setup-ruby@v1
+    - uses: ruby/setup-ruby@9eb537ca036ebaed86729dcb9309076e4c5c3b74 # v1.314.0
       with:
         bundler-cache: true
 
