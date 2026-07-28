@@ -41,6 +41,9 @@ The Ruby checks and specs GitHub actions have different options that can be enab
   - `pact`: execute Pact verification after the specs if needed. The default value is `auto`. With this value the action tries to automatically detect if Pact is configured on the project (by checking for the `pact:verify` rake task in the Rakefile). Other possible options are `true` and `false`.
   - `github_token`: GitHub token for API access. It is used to upload code coverage status. If not set, the action doesn't upload code coverage status on github. Note: the [permission `statuses: write` must be granted to the GitHub token](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#defining-access-for-the-github_token-scopes-1) used in order to report coverage status.
 
+> [!NOTE]
+> GitHub automatically creates a `GITHUB_TOKEN` for each job. You do not need to generate or store a separate token; pass it to this action with `${{ secrets.GITHUB_TOKEN }}`.
+
 Enable one of these options with:
 
 ```yml
