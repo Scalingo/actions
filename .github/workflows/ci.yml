@@ -83,6 +83,24 @@ jobs:
         with:
           working-directory: test/go-linter
 
+  ansible-linter:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: Run Ansible lint action
+        uses: ./ansible-linter
+        with:
+          working-directory: test/ansible-linter/fixture
+          args: playbook.yml
+
+      - name: Run Ansible lint action with explicit Python version
+        uses: ./ansible-linter
+        with:
+          working-directory: test/ansible-linter/fixture
+          args: playbook.yml
+          python-version: "3.13"
+
   shellcheck:
     runs-on: ubuntu-24.04
     steps:

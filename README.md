@@ -81,6 +81,46 @@ See how it's used in the [go-project-template](https://github.com/Scalingo/go-pr
 
 GitHub Action to import a GPG key into the local agent, primarily used for signing Terraform provider releases.
 
+## Ansible Linter
+
+The Ansible linter GitHub action wraps the official `ansible/ansible-lint` action so Scalingo repositories can reuse a pinned, shared configuration.
+
+Available inputs:
+
+- `args` (opt):\
+  Arguments passed to `ansible-lint`.\
+  Defaults to an empty string.
+
+- `working-directory` (opt):\
+  Directory where `ansible-lint` runs.\
+  Defaults to the repository root.
+
+- `python-version` (opt):\
+  Python version used by the upstream action.\
+  Defaults to `3.14`.
+
+- `setup-python` (opt):\
+  Whether Python should be installed before running `ansible-lint`.\
+  Defaults to `true`.
+
+- `requirements-file` (opt):\
+  Path to a `requirements.yml` file used to install roles and collections before linting.\
+  Defaults to an empty string.
+
+Here is an example:
+
+```yaml
+jobs:
+  ansible-lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: Scalingo/actions/ansible-linter@main
+        with:
+          working-directory: ansible
+          args: playbook.yml
+          requirements-file: requirements.yml
+```
+
 ## ShellCheck
 
 The ShellCheck Github action allows to run ShellCheck on a repository.
@@ -111,7 +151,7 @@ Here is an example:
 jobs:
   shellcheck:
     name: "ShellCheck"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: Scalingo/actions/shellcheck@main
         with:
