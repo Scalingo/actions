@@ -1509,7 +1509,9 @@ class GitHubHelper {
             const isEventualConsistencyError = (e) => e instanceof request_error_1.RequestError &&
                 e.status === 422 &&
                 e.message.includes('Could not resolve to a node');
-            const withRetryForNewPr = (fn) => pull.created ? utils.retryWithBackoff(fn, isEventualConsistencyError) : fn();
+            const withRetryForNewPr = (fn) => pull.created
+                ? utils.retryWithBackoff(fn, isEventualConsistencyError)
+                : fn();
             // Apply milestone
             if (inputs.milestone) {
                 core.info(`Applying milestone '${inputs.milestone}'`);
@@ -1961,8 +1963,26 @@ function getRepoPath(relativePath) {
     githubWorkspacePath = path.resolve(githubWorkspacePath);
     core.debug(`githubWorkspacePath: ${githubWorkspacePath}`);
     let repoPath = githubWorkspacePath;
-    if (relativePath)
-        repoPath = path.resolve(repoPath, relativePath);
+    if (relativePath) {
+        if (path.isAbsolute(relativePath)) {
+            throw new Error('Invalid relativePath');
+        }
+        const normalized = path.posix
+            .normalize(relativePath)
+            .replace(/^(\.\.(\/|\\|$))+/, '');
+        if (normalized === '' ||
+            normalized.startsWith('..') ||
+            normalized.includes('../') ||
+            normalized.includes('..\\')) {
+            throw new Error('Invalid relativePath');
+        }
+        const candidate = path.resolve(githubWorkspacePath, normalized);
+        if (!candidate.startsWith(githubWorkspacePath + path.sep) &&
+            candidate !== githubWorkspacePath) {
+            throw new Error('Invalid relativePath');
+        }
+        repoPath = candidate;
+    }
     core.debug(`repoPath: ${repoPath}`);
     return repoPath;
 }
