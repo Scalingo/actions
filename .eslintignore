@@ -1,0 +1,5 @@
+# Vendored/forked third-party GitHub Actions. Their own tooling (ESLint
+# config, plugins, dependencies) is managed within their own directory and
+# isn't installed at the repository root, so exclude them from the
+# repository-wide lint pass.
+create-pull-request/
