@@ -84,6 +84,26 @@ See how it's used in the [go-project-template](https://github.com/Scalingo/go-pr
 
 GitHub Action to import a GPG key into the local agent, primarily used for signing Terraform provider releases.
 
+## Create Pull Request
+
+A vendored copy of the [`peter-evans/create-pull-request`](https://github.com/peter-evans/create-pull-request)
+GitHub Action, used to create a pull request for changes made to the
+repository during a workflow run. See [`create-pull-request/VENDORING.md`](/create-pull-request/VENDORING.md)
+for why it is vendored here rather than referenced directly, and how to
+update it. Refer to [`create-pull-request/README.md`](/create-pull-request/README.md)
+for the full list of inputs and outputs.
+
+```yaml
+jobs:
+  create-pr:
+    # ...
+    steps:
+      - uses: Scalingo/actions/create-pull-request@main
+        with:
+          title: "Automated changes"
+          commit-message: "chore: automated changes"
+```
+
 ## ShellCheck
 
 The ShellCheck Github action allows to run ShellCheck on a repository.
