@@ -11,6 +11,18 @@ updates:
         patterns:
           - "*"
 
+  - package-ecosystem: "npm"
+    directory: "/create-pull-request"
+    allow:
+      - dependency-type: "direct"
+    versioning-strategy: lockfile-only
+    open-pull-requests-limit: 10
+    labels:
+      - "T: Deps"
+    schedule:
+      interval: "monthly"
+      time: "06:00"
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
