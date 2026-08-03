@@ -1,0 +1,8 @@
+---
+- name: Test playbook
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Display a message
+      ansible.builtin.debug:
+        msg: Hello from ansible-lint
