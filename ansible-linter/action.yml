@@ -23,6 +23,15 @@ inputs:
     required: false
     default: ""
 
+  files:
+    description: |
+      List of files to lint.
+      When unset, ansible-lint discovers files automatically.
+      Each line must contain one path relative to the repository root.
+      Paths may be literal or glob expressions.
+    required: false
+    default: ""
+
 runs:
   using: "composite"
   steps:
@@ -32,6 +41,7 @@ runs:
         fetch-depth: 0
 
     - name: Run Ansible Lint
+      if: ${{ inputs.files == '' }}
       uses: ansible/ansible-lint@262624cd0ab22a4221293216856c59671ce7aa5e # v26.6.0
       with:
         args: ${{ inputs.args }}
@@ -39,3 +49,22 @@ runs:
         python_version: ${{ inputs.python-version }}
         setup_python: ${{ inputs.setup-python }}
         requirements_file: ${{ inputs.requirements-file }}
+
+    - name: Set up Ansible Lint for selected files
+      if: ${{ inputs.files != '' }}
+      uses: ansible/ansible-lint@262624cd0ab22a4221293216856c59671ce7aa5e # v26.6.0
+      with:
+        args: --version
+        working_directory: ${{ inputs.working-directory }}
+        python_version: ${{ inputs.python-version }}
+        setup_python: ${{ inputs.setup-python }}
+        requirements_file: ${{ inputs.requirements-file }}
+
+    - name: Run Ansible Lint on selected files
+      if: ${{ inputs.files != '' }}
+      shell: bash
+      env:
+        ARGS: ${{ inputs.args }}
+        FILES: ${{ inputs.files }}
+        WORKING_DIRECTORY: ${{ inputs.working-directory }}
+      run: ${GITHUB_ACTION_PATH}/scripts/run-ansible-lint.sh

@@ -130,6 +130,11 @@ Available inputs:
   Path to a `requirements.yml` file used to install roles and collections before linting.\
   Defaults to an empty string.
 
+- `files` (opt):\
+  Newline-separated list of files to lint, relative to the repository root.\
+  When set, only these files are linted. Each line may be a literal path or a glob expression.\
+  Defaults to an empty string, which lets `ansible-lint` discover files automatically.
+
 Here is an example:
 
 ```yaml
@@ -142,6 +147,17 @@ jobs:
           working-directory: ansible
           args: playbook.yml
           requirements-file: requirements.yml
+```
+
+To lint only changed files, pass the changed-file list with one path per line:
+
+```yaml
+      - uses: Scalingo/actions/ansible-linter@main
+        with:
+          working-directory: ansible
+          files: |
+            ansible/playbooks/site.yml
+            ansible/roles/web/tasks/main.yml
 ```
 
 ## ShellCheck

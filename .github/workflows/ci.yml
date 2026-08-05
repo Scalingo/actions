@@ -101,6 +101,15 @@ jobs:
           args: playbook.yml
           python-version: "3.13"
 
+      - name: Run Ansible lint action on selected files
+        uses: ./ansible-linter
+        with:
+          working-directory: test/ansible-linter/fixture
+          files: test/ansible-linter/fixture/playbook.yml
+
+      - name: Test the Ansible lint action
+        run: ./test/ansible-linter/execution.sh
+
   shellcheck:
     runs-on: ubuntu-24.04
     steps:
