@@ -26,7 +26,7 @@ inputs:
   files:
     description: |
       List of files to lint.
-      When unset, ansible-lint discovers files automatically.
+      When unset, ansible-linter discovers files automatically.
       Each line must contain one path relative to the repository root.
       Paths may be literal or glob expressions.
     required: false
@@ -50,7 +50,7 @@ runs:
         setup_python: ${{ inputs.setup-python }}
         requirements_file: ${{ inputs.requirements-file }}
 
-    - name: Set up Ansible Lint for selected files
+    - name: Set up Ansible Lint environment for selected files
       if: ${{ inputs.files != '' }}
       uses: ansible/ansible-lint@262624cd0ab22a4221293216856c59671ce7aa5e # v26.6.0
       with:

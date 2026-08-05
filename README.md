@@ -133,7 +133,7 @@ Available inputs:
 - `files` (opt):\
   Newline-separated list of files to lint, relative to the repository root.\
   When set, only these files are linted. Each line may be a literal path or a glob expression.\
-  Defaults to an empty string, which lets `ansible-lint` discover files automatically.
+  Defaults to an empty string, which lets ansible-linter discover files automatically.
 
 Here is an example:
 
