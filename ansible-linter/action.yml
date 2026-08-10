@@ -43,6 +43,7 @@ runs:
       if: ${{ inputs.files == '' }}
       uses: ansible/ansible-lint@262624cd0ab22a4221293216856c59671ce7aa5e # v26.6.0
       with:
+        # Nested composites resolve github.action_ref to the parent; keep this SHA in sync with `uses`.
         override_version: 262624cd0ab22a4221293216856c59671ce7aa5e
         args: ${{ inputs.args }}
         working_directory: ${{ inputs.working-directory }}
@@ -54,6 +55,7 @@ runs:
       if: ${{ inputs.files != '' }}
       uses: ansible/ansible-lint@262624cd0ab22a4221293216856c59671ce7aa5e # v26.6.0
       with:
+        # Nested composites resolve github.action_ref to the parent; keep this SHA in sync with `uses`.
         override_version: 262624cd0ab22a4221293216856c59671ce7aa5e
         args: --version
         working_directory: ${{ inputs.working-directory }}
