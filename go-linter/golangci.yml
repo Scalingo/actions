@@ -64,6 +64,8 @@ linters:
     goconst:
       min-len: 3
       min-occurrences: 3
+      numbers: true
+      ignore-map-keys: true
     gocritic:
       enabled-checks:
         - appendCombine
