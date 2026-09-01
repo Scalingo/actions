@@ -76,9 +76,9 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       run: ${GITHUB_ACTION_PATH}/scripts/redis-start.sh
 
-    # Only execute this step if the repository contains the extra setup script
+    # Only execute this step if the module contains an extra setup script.
     - name: "Execute the extra setup step"
-      if: ${{ hashFiles('bin/scalingo-ci-extra-setup.sh') != '' }}
+      if: ${{ (inputs.working-directory == github.workspace && hashFiles('bin/scalingo-ci-extra-setup.sh') != '') || (inputs.working-directory != github.workspace && hashFiles(format('{0}/bin/scalingo-ci-extra-setup.sh', inputs.working-directory)) != '') }}
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: bin/scalingo-ci-extra-setup.sh

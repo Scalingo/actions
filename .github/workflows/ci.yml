@@ -59,6 +59,26 @@ jobs:
       - name: Test the Go tests action
         run: ./test/go-tests/execution.sh mongodb-auto
 
+  go-tests-nested-module:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: Set up nested Go module
+        run: |
+          mkdir -p nested-module bin
+          cp -R test/go-tests/{go.mod,go.sum,main.go,vendor} nested-module/
+          printf '#!/usr/bin/env bash\nexit 1\n' > bin/scalingo-ci-extra-setup.sh
+          chmod +x bin/scalingo-ci-extra-setup.sh
+
+      - name: Run Go tests action
+        uses: ./go-tests
+        with:
+          working-directory: nested-module
+          etcd: false
+          mongodb: false
+          redis: false
+
   js-linter-test:
     runs-on: ubuntu-24.04
     steps:
