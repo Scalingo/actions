@@ -88,7 +88,6 @@ jobs:
 
       - name: Set up nested Go module and extra setup script
         run: |
-          mkdir nested-module
           ./test/go-tests/setup.sh "${GITHUB_WORKSPACE}/nested-module"
           ./test/go-tests/setup-extra-setup.sh "${GITHUB_WORKSPACE}/nested-module" success
 
@@ -112,7 +111,6 @@ jobs:
 
       - name: Set up nested Go module and failing root extra setup script
         run: |
-          mkdir nested-module
           ./test/go-tests/setup.sh "${GITHUB_WORKSPACE}/nested-module"
           ./test/go-tests/setup-extra-setup.sh "${GITHUB_WORKSPACE}" failure
 
@@ -134,7 +132,6 @@ jobs:
 
       - name: Set up nested Go module with root and nested extra setup scripts
         run: |
-          mkdir nested-module
           ./test/go-tests/setup.sh "${GITHUB_WORKSPACE}/nested-module"
           ./test/go-tests/setup-extra-setup.sh "${GITHUB_WORKSPACE}" failure
           ./test/go-tests/setup-extra-setup.sh "${GITHUB_WORKSPACE}/nested-module" success
