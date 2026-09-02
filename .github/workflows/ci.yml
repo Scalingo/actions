@@ -59,6 +59,96 @@ jobs:
       - name: Test the Go tests action
         run: ./test/go-tests/execution.sh mongodb-auto
 
+  go-tests-root-module-with-extra-setup:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: Set up root Go module and extra setup script
+        run: |
+          ./test/go-tests/setup.sh
+          ./test/go-tests/setup-extra-setup-script.sh "${GITHUB_WORKSPACE}" success
+
+      - name: Run Go tests action
+        uses: ./go-tests
+        with:
+          etcd: false
+          mongodb: false
+          redis: false
+
+      - name: Test the Go tests action
+        run: |
+          ./test/go-tests/execution.sh without-databases
+          test -f .scalingo-ci-extra-setup-ran
+
+  go-tests-nested-module-with-extra-setup:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: Set up nested Go module and extra setup script
+        run: |
+          ./test/go-tests/setup.sh "${GITHUB_WORKSPACE}/nested-module"
+          ./test/go-tests/setup-extra-setup-script.sh "${GITHUB_WORKSPACE}/nested-module" success
+
+      - name: Run Go tests action
+        uses: ./go-tests
+        with:
+          working-directory: nested-module
+          etcd: false
+          mongodb: false
+          redis: false
+
+      - name: Test the Go tests action
+        run: |
+          ./test/go-tests/execution.sh without-databases
+          test -f nested-module/.scalingo-ci-extra-setup-ran
+
+  go-tests-nested-module-with-failing-root-extra-setup:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: Set up nested Go module and failing root extra setup script
+        run: |
+          ./test/go-tests/setup.sh "${GITHUB_WORKSPACE}/nested-module"
+          ./test/go-tests/setup-extra-setup-script.sh "${GITHUB_WORKSPACE}" failure
+
+      - name: Run Go tests action
+        uses: ./go-tests
+        with:
+          working-directory: nested-module
+          etcd: false
+          mongodb: false
+          redis: false
+
+      - name: Test the Go tests action
+        run: ./test/go-tests/execution.sh without-databases
+
+  go-tests-nested-module-with-root-and-nested-extra-setup:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+
+      - name: Set up nested Go module with root and nested extra setup scripts
+        run: |
+          ./test/go-tests/setup.sh "${GITHUB_WORKSPACE}/nested-module"
+          ./test/go-tests/setup-extra-setup-script.sh "${GITHUB_WORKSPACE}" failure
+          ./test/go-tests/setup-extra-setup-script.sh "${GITHUB_WORKSPACE}/nested-module" success
+
+      - name: Run Go tests action
+        uses: ./go-tests
+        with:
+          working-directory: nested-module
+          etcd: false
+          mongodb: false
+          redis: false
+
+      - name: Test the Go tests action
+        run: |
+          ./test/go-tests/execution.sh without-databases
+          test -f nested-module/.scalingo-ci-extra-setup-ran
+
   js-linter-test:
     runs-on: ubuntu-24.04
     steps:
