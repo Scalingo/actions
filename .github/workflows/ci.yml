@@ -67,7 +67,7 @@ jobs:
       - name: Set up root Go module and extra setup script
         run: |
           ./test/go-tests/setup.sh
-          ./test/go-tests/setup-extra-setup.sh "${GITHUB_WORKSPACE}" success
+          ./test/go-tests/setup-extra-setup-script.sh "${GITHUB_WORKSPACE}" success
 
       - name: Run Go tests action
         uses: ./go-tests
@@ -89,7 +89,7 @@ jobs:
       - name: Set up nested Go module and extra setup script
         run: |
           ./test/go-tests/setup.sh "${GITHUB_WORKSPACE}/nested-module"
-          ./test/go-tests/setup-extra-setup.sh "${GITHUB_WORKSPACE}/nested-module" success
+          ./test/go-tests/setup-extra-setup-script.sh "${GITHUB_WORKSPACE}/nested-module" success
 
       - name: Run Go tests action
         uses: ./go-tests
@@ -112,7 +112,7 @@ jobs:
       - name: Set up nested Go module and failing root extra setup script
         run: |
           ./test/go-tests/setup.sh "${GITHUB_WORKSPACE}/nested-module"
-          ./test/go-tests/setup-extra-setup.sh "${GITHUB_WORKSPACE}" failure
+          ./test/go-tests/setup-extra-setup-script.sh "${GITHUB_WORKSPACE}" failure
 
       - name: Run Go tests action
         uses: ./go-tests
@@ -133,8 +133,8 @@ jobs:
       - name: Set up nested Go module with root and nested extra setup scripts
         run: |
           ./test/go-tests/setup.sh "${GITHUB_WORKSPACE}/nested-module"
-          ./test/go-tests/setup-extra-setup.sh "${GITHUB_WORKSPACE}" failure
-          ./test/go-tests/setup-extra-setup.sh "${GITHUB_WORKSPACE}/nested-module" success
+          ./test/go-tests/setup-extra-setup-script.sh "${GITHUB_WORKSPACE}" failure
+          ./test/go-tests/setup-extra-setup-script.sh "${GITHUB_WORKSPACE}/nested-module" success
 
       - name: Run Go tests action
         uses: ./go-tests
