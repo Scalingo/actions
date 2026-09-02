@@ -66,8 +66,9 @@ jobs:
 
       - name: Set up nested Go module
         run: |
-          mkdir -p nested-module bin
-          cp -R test/go-tests/{go.mod,go.sum,main.go,vendor} nested-module/
+          mkdir nested-module
+          ./test/go-tests/setup.sh "${GITHUB_WORKSPACE}/nested-module"
+          mkdir bin
           printf '#!/usr/bin/env bash\nexit 1\n' > bin/scalingo-ci-extra-setup.sh
           chmod +x bin/scalingo-ci-extra-setup.sh
 
@@ -78,6 +79,9 @@ jobs:
           etcd: false
           mongodb: false
           redis: false
+
+      - name: Test the Go tests action
+        run: ./test/go-tests/execution.sh without-databases
 
   js-linter-test:
     runs-on: ubuntu-24.04
