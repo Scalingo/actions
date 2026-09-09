@@ -1,7 +1,9 @@
 dependencies = []
 description = "Repository of GitHub Actions of the organisation"
+destination_server = []
 flags = ["tools"]
-languages = ["GitHub Action", "shell", "YAML"]
-owner = "etienne@scalingo.com"
+languages = ["shell", "github-actions"]
+owner = "team-infrastructure-services@scalingo.com"
 team = "IST"
+tier = 1
 version = "1.1.2"
