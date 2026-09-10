@@ -7,7 +7,7 @@ import {
 import * as fs from 'fs'
 import {GitCommandManager} from '../lib/git-command-manager'
 import * as path from 'path'
-import {v4 as uuidv4} from 'uuid'
+import {randomUUID} from 'crypto'
 
 const REPO_PATH = '/git/local/repos/test-base'
 const REMOTE_NAME = 'origin'
@@ -31,7 +31,7 @@ const ADD_PATHS_MULTI = ['a', 'b']
 const ADD_PATHS_WILDCARD = ['a/*.txt', 'b/*.txt']
 
 async function createFile(filename: string, content?: string): Promise<string> {
-  const _content = content ? content : uuidv4()
+  const _content = content ? content : randomUUID()
   const filepath = path.join(REPO_PATH, filename)
   await fs.promises.mkdir(path.dirname(filepath), {recursive: true})
   await fs.promises.writeFile(filepath, _content, {encoding: 'utf8'})
@@ -82,7 +82,7 @@ async function createCommits(
     } else {
       result.changes = await createChanges()
     }
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     await git.exec(['add', '-A'])
     await git.commit(['-m', commitMessage])
     result.commitMsgs.unshift(commitMessage)
@@ -313,7 +313,7 @@ describe('create-or-update-branch tests', () => {
   })
 
   it('tests no changes resulting in no new branch being created', async () => {
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -330,7 +330,7 @@ describe('create-or-update-branch tests', () => {
   it('tests create and update with a tracked file change', async () => {
     // Create a tracked file change
     const trackedContent = await createFile(TRACKED_FILE)
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -359,7 +359,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create a tracked file change
     const _trackedContent = await createFile(TRACKED_FILE)
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -381,7 +381,7 @@ describe('create-or-update-branch tests', () => {
   it('tests create and update with an untracked file change', async () => {
     // Create an untracked file change
     const untrackedContent = await createFile(UNTRACKED_FILE)
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -410,7 +410,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create an untracked file change
     const _untrackedContent = await createFile(UNTRACKED_FILE)
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -434,7 +434,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create tracked and untracked file changes
     const changes = await createChanges()
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -464,7 +464,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create identical tracked and untracked file changes
     await createChanges(changes.tracked, changes.untracked)
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -486,7 +486,7 @@ describe('create-or-update-branch tests', () => {
   it('tests create and update with commits on the base inbetween', async () => {
     // Create tracked and untracked file changes
     const changes = await createChanges()
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -524,7 +524,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create tracked and untracked file changes
     const _changes = await createChanges()
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -556,7 +556,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create tracked and untracked file changes
     const changes = await createChanges()
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -585,7 +585,7 @@ describe('create-or-update-branch tests', () => {
     await beforeTest()
 
     // Running with no update effectively reverts the branch back to match the base
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -607,7 +607,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create tracked and untracked file changes
     const changes = await createChanges()
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -648,7 +648,7 @@ describe('create-or-update-branch tests', () => {
       commits.changes.tracked,
       commits.changes.untracked
     )
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -673,7 +673,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create tracked and untracked file changes
     const changes = await createChanges()
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -703,7 +703,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create a commit on the base with a partial merge of the changes
     await createFile(TRACKED_FILE, changes.tracked)
-    const baseCommitMessage = uuidv4()
+    const baseCommitMessage = randomUUID()
     await git.exec(['add', '-A'])
     await git.commit(['-m', baseCommitMessage])
     await git.push([
@@ -714,7 +714,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create the same tracked and untracked file changes
     const _changes = await createChanges(changes.tracked, changes.untracked)
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -746,7 +746,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create tracked and untracked file changes
     const changes = await createChanges()
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -790,7 +790,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create the same tracked and untracked file changes (no change on update)
     const _changes = await createChanges(changes.tracked, changes.untracked)
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -816,7 +816,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create tracked and untracked file changes
     const changes = await createChanges()
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -845,7 +845,7 @@ describe('create-or-update-branch tests', () => {
     await beforeTest()
 
     // Force push the base branch to a different commit
-    const amendedCommitMessage = uuidv4()
+    const amendedCommitMessage = randomUUID()
     await git.commit(['--amend', '-m', amendedCommitMessage])
     await git.push([
       '--force',
@@ -855,7 +855,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create the same tracked and untracked file changes (no change on update)
     const _changes = await createChanges(changes.tracked, changes.untracked)
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -878,7 +878,7 @@ describe('create-or-update-branch tests', () => {
   it('tests create and update with commits on the working base (during the workflow)', async () => {
     // Create commits on the working base
     const commits = await createCommits(git)
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -910,7 +910,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create commits on the working base
     const _commits = await createCommits(git)
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -937,7 +937,7 @@ describe('create-or-update-branch tests', () => {
     const commits = await createCommits(git)
     // Create tracked and untracked file changes
     const changes = await createChanges()
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -973,7 +973,7 @@ describe('create-or-update-branch tests', () => {
     const _commits = await createCommits(git)
     // Create tracked and untracked file changes
     const _changes = await createChanges()
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -1002,7 +1002,7 @@ describe('create-or-update-branch tests', () => {
     const commits = await createCommits(git)
     // Create tracked and untracked file changes
     const changes = await createChanges()
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -1046,7 +1046,7 @@ describe('create-or-update-branch tests', () => {
     const _commits = await createCommits(git)
     // Create tracked and untracked file changes
     const _changes = await createChanges()
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -1074,7 +1074,7 @@ describe('create-or-update-branch tests', () => {
   it('tests create and update using a different remote from the base', async () => {
     // Create tracked and untracked file changes
     const changes = await createChanges()
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -1104,7 +1104,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create tracked and untracked file changes
     const _changes = await createChanges()
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -1127,7 +1127,7 @@ describe('create-or-update-branch tests', () => {
   it('tests create and update with signoff on commit', async () => {
     // Create tracked and untracked file changes
     const changes = await createChanges()
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -1164,7 +1164,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create tracked and untracked file changes
     const _changes = await createChanges()
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -1194,7 +1194,7 @@ describe('create-or-update-branch tests', () => {
   it('tests create and update with multiple add-paths', async () => {
     // Create tracked and untracked file changes
     const changes = await createChanges()
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -1224,7 +1224,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create tracked and untracked file changes
     const _changes = await createChanges()
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -1247,7 +1247,7 @@ describe('create-or-update-branch tests', () => {
   it('tests create and update with wildcard add-paths', async () => {
     // Create tracked and untracked file changes
     const changes = await createChanges()
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -1277,7 +1277,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create tracked and untracked file changes
     const _changes = await createChanges()
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -1300,7 +1300,7 @@ describe('create-or-update-branch tests', () => {
   it('tests create with add-paths resolving to no changes when other changes exist', async () => {
     // Create tracked and untracked file changes
     await createChanges()
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -1321,7 +1321,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create tracked and untracked file changes
     const changes = await createChanges()
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const resultA = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -1365,7 +1365,7 @@ describe('create-or-update-branch tests', () => {
     // Set the working base to a branch that is not the pull request base
     await git.checkout(NOT_BASE_BRANCH)
 
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -1386,7 +1386,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create a tracked file change
     const trackedContent = await createFile(TRACKED_FILE)
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -1418,7 +1418,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create a tracked file change
     const _trackedContent = await createFile(TRACKED_FILE)
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -1443,7 +1443,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create an untracked file change
     const untrackedContent = await createFile(UNTRACKED_FILE)
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -1475,7 +1475,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create an untracked file change
     const _untrackedContent = await createFile(UNTRACKED_FILE)
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -1502,7 +1502,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create tracked and untracked file changes
     const changes = await createChanges()
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -1535,7 +1535,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create identical tracked and untracked file changes
     await createChanges(changes.tracked, changes.untracked)
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -1560,7 +1560,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create tracked and untracked file changes
     const changes = await createChanges()
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -1601,7 +1601,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create tracked and untracked file changes
     const _changes = await createChanges()
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -1635,7 +1635,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create tracked and untracked file changes
     const changes = await createChanges()
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -1667,7 +1667,7 @@ describe('create-or-update-branch tests', () => {
     await git.checkout(NOT_BASE_BRANCH)
 
     // Running with no update effectively reverts the branch back to match the base
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -1694,7 +1694,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create tracked and untracked file changes
     const changes = await createChanges()
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -1738,7 +1738,7 @@ describe('create-or-update-branch tests', () => {
       commits.changes.tracked,
       commits.changes.untracked
     )
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -1768,7 +1768,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create tracked and untracked file changes
     const changes = await createChanges()
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -1798,7 +1798,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create a commit on the base with a partial merge of the changes
     await createFile(TRACKED_FILE, changes.tracked)
-    const baseCommitMessage = uuidv4()
+    const baseCommitMessage = randomUUID()
     await git.exec(['add', '-A'])
     await git.commit(['-m', baseCommitMessage])
     await git.push([
@@ -1812,7 +1812,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create the same tracked and untracked file changes
     const _changes = await createChanges(changes.tracked, changes.untracked)
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -1846,7 +1846,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create tracked and untracked file changes
     const changes = await createChanges()
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -1893,7 +1893,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create the same tracked and untracked file changes (no change on update)
     const _changes = await createChanges(changes.tracked, changes.untracked)
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -1924,7 +1924,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create tracked and untracked file changes
     const changes = await createChanges()
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -1953,7 +1953,7 @@ describe('create-or-update-branch tests', () => {
     await beforeTest()
 
     // Force push the base branch to a different commit
-    const amendedCommitMessage = uuidv4()
+    const amendedCommitMessage = randomUUID()
     await git.commit(['--amend', '-m', amendedCommitMessage])
     await git.push([
       '--force',
@@ -1966,7 +1966,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create the same tracked and untracked file changes (no change on update)
     const _changes = await createChanges(changes.tracked, changes.untracked)
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -1992,7 +1992,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create commits on the working base
     const commits = await createCommits(git)
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -2027,7 +2027,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create commits on the working base
     const _commits = await createCommits(git)
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -2057,7 +2057,7 @@ describe('create-or-update-branch tests', () => {
     const commits = await createCommits(git)
     // Create tracked and untracked file changes
     const changes = await createChanges()
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -2096,7 +2096,7 @@ describe('create-or-update-branch tests', () => {
     const _commits = await createCommits(git)
     // Create tracked and untracked file changes
     const _changes = await createChanges()
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -2128,7 +2128,7 @@ describe('create-or-update-branch tests', () => {
     const commits = await createCommits(git)
     // Create tracked and untracked file changes
     const changes = await createChanges()
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -2175,7 +2175,7 @@ describe('create-or-update-branch tests', () => {
     const _commits = await createCommits(git)
     // Create tracked and untracked file changes
     const _changes = await createChanges()
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -2205,7 +2205,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create tracked and untracked file changes
     const changes = await createChanges()
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -2238,7 +2238,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create tracked and untracked file changes
     const _changes = await createChanges()
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -2268,7 +2268,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create tracked and untracked file changes
     const changes = await createChanges()
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -2302,7 +2302,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create tracked and untracked file changes
     const _changes = await createChanges()
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -2329,7 +2329,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create tracked and untracked file changes
     const changes = await createChanges()
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -2371,7 +2371,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create tracked and untracked file changes
     const _changes = await createChanges()
-    const _commitMessage = uuidv4()
+    const _commitMessage = randomUUID()
     const _result = await createOrUpdateBranch(
       git,
       _commitMessage,
@@ -2403,7 +2403,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create commits on the working base
     const commits = await createCommits(git)
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const result = await createOrUpdateBranch(
       git,
       commitMessage,
@@ -2428,7 +2428,7 @@ describe('create-or-update-branch tests', () => {
 
     // Create tracked and untracked file changes
     const changes = await createChanges()
-    const commitMessage = uuidv4()
+    const commitMessage = randomUUID()
     const resultA = await createOrUpdateBranch(
       git,
       commitMessage,
