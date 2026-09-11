@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
 import {GitCommandManager, Commit} from './git-command-manager'
-import {v4 as uuidv4} from 'uuid'
+import {randomUUID} from 'crypto'
 import * as utils from './utils'
 
 const CHERRYPICK_EMPTY =
@@ -189,7 +189,7 @@ export async function createOrUpdateBranch(
   const baseRemote = 'origin'
 
   // Save the working base changes to a temporary branch
-  const tempBranch = uuidv4()
+  const tempBranch = randomUUID()
   await git.checkout(tempBranch, 'HEAD')
   // Commit any uncommitted changes
   if (await git.isDirty(true, addPaths)) {
