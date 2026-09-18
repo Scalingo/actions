@@ -3,6 +3,10 @@ name: ShellCheck GitHub Action
 description: |
   Execute ShellCheck in a GitHub Action.
 
+permissions:
+  actions: read
+  contents: read
+
 inputs:
   version:
     description: |
@@ -17,7 +21,7 @@ inputs:
       ShellCheck severity to use.
       One of 'error', 'warning', 'info', or 'style'.
     required: false
-    default: style
+    default: "style"
 
   files:
     description: |
@@ -34,6 +38,14 @@ inputs:
     required: false
     default: ""
 
+  enable_all_checks:
+    description: |
+      When set to 'true', instructs ShellCheck to run all tests it knows, even
+      optional ones that are not enabled by default. Equivalent to running with
+      the `--enable=all` flag.
+    required: false
+    default: "false"
+
 runs:
   using: "composite"
   steps:
@@ -45,6 +57,7 @@ runs:
         FILES: ${{ inputs.files }}
         SEVERITY: ${{ inputs.severity }}
         VERSION: ${{ inputs.version }}
+        ALL_CHECKS: ${{ inputs.enable_all_checks }}
       run: |
         docker run --rm \
             --env FILES \
