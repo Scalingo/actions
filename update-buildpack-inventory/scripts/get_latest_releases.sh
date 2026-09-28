@@ -4,7 +4,7 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-gh api "repos/${GITHUB_REPOSITORY}/releases" --paginate \
+gh api "repos/${REPOSITORY}/releases" --paginate \
 	| jq --raw-output --arg majors "${MAJORS}" '
 		#
 		# Convert the space-separated MAJORS string into a jq array.
