@@ -86,11 +86,12 @@ name: Update buildpack inventory
 on:
   workflow_dispatch:
   schedule:
+    # Everyday at 6am:
     - cron: "0 6 * * *"
 
 jobs:
   update-inventory:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26
     permissions:
       contents: write
       pull-requests: write
