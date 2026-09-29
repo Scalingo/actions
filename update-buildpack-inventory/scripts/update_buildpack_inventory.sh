@@ -20,7 +20,7 @@ new_inventory="$( mktemp -- "${INVENTORY}.new.XXXXXX" )" || exit 1
 
 # -----------------------------------------------------------------------------
 
-inventory::add_new_releases() {
+inventory::check_and_add_new_releases() {
 #
 # Compares the releases table read from stdin with what's already in the
 # inventory file.
@@ -221,7 +221,7 @@ if [[ -s "${tmp_inventory}" ]]; then
 fi
 
 # Check for new releases:
-inventory::add_new_releases
+inventory::check_and_add_new_releases
 
 # Removes empty lines from the file:
 inventory::remove_empty_lines "${tmp_inventory}"
