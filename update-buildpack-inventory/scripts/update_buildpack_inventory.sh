@@ -145,7 +145,7 @@ inventory::set_default_version() {
 #
 
 	local target_major="${1}"
-	local header
+	local header_row
 	local seen_default=""
 	local version
 	local url
@@ -153,9 +153,11 @@ inventory::set_default_version() {
 	local default
 	local major
 
-	# Read the header separately so its columns remain unchanged.
-	IFS= read -r header
-	printf '%s\n' "${header}"
+	# Read first line (header):
+	IFS= read -r header_row
+
+	# Prints the header:
+	printf '%s\n' "${header_row}"
 
 	while IFS=$'\t' read -r version url sha256 default; do
 		major="${version%%.*}"
@@ -203,8 +205,14 @@ while IFS= read -r major; do
 done <<< "${major_versions}"
 
 
+if [[ ! -f "${INVENTORY}" ]]; then
+	# Create inventory file:
+	printf '%s\t%s\t%s\t%s\n' \
+		"Version" "URL" "Checksum" "Default?" > "${INVENTORY}"
+fi
+
 # Put inventory file aside:
-cp -- "${INVENTORY}" "${tmp_inventory}"
+cp -- "${INVENTORY}" "${tmp_inventory}" >/dev/null
 
 # Ensures the file ends with a newline char, so we can safely append a new row.
 # The `-s` check ensures the file is not empty.
@@ -223,5 +231,5 @@ inventory::sort "${tmp_inventory}" "DESC" \
 	| inventory::set_default_version "${default_major}" > "${new_inventory}"
 
 # Move updated inventory back in place, preserve orginal permissions:
-chmod --reference="${INVENTORY}" -- "${new_inventory}"
+chmod u+r -- "${new_inventory}"
 mv -- "${new_inventory}" "${INVENTORY}"
