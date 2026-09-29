@@ -200,3 +200,8 @@ jobs:
             second/*.sh
             third.sh
 ```
+
+## Update Buildpack Inventory
+
+Allows to add new releases to a buildpack inventory file.\
+[More](update-buildpack-inventory/README.md)
