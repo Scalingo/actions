@@ -22,7 +22,7 @@ no new pull request is created when there are no changes.
 
 ## Available Inputs
 
-- `repository` (required):\
+- `repository` (req):\
   Repository to read releases from, in `owner/repo` format, for example
   `keycloak/keycloak`.\
   Must be nonempty.
@@ -31,7 +31,7 @@ no new pull request is created when there are no changes.
   Path to the existing inventory file, relative to `GITHUB_WORKSPACE`.\
   Defaults to `INVENTORY.tsv`.
 
-- `major_versions` (required):\
+- `major_versions` (req):\
   Major versions to consider, separated by single spaces, for example
   `"16 17 18"`.\
   It only controls which releases are added. It does not remove existing
@@ -44,7 +44,7 @@ no new pull request is created when there are no changes.
   major.
 
 
-## Requirements
+## Instructions
 
 - Use a Linux runner with Bash, GNU command-line utilities, Git, GitHub CLI (`gh`),
   and `jq` available.
@@ -56,24 +56,19 @@ no new pull request is created when there are no changes.
   version; if a release has multiple matching assets, the first encountered is
   used.
 
-- The inventory must already exist and contain a header followed by
-  tab-separated columns: version, URL, checksum, and default marker. Checksums
-  use the `sha256:` prefix; the last column is either `default` or empty. A
-  header-only file is supported.
-
 - Set `GH_TOKEN` for [GitHub CLI authentication](https://cli.github.com/manual/gh_auth_login).
   The example below uses the workflow's token to read releases from a public
   repository. For a private release source, provide a token with access to it.
 
-- Grant the calling workflow `contents: write` and `pull-requests: write`, and
+- Declare `permissions` in the calling workflow, either at the workflow level
+  or on the job using this action.\
+  Grant the calling workflow `contents: write` and `pull-requests: write`, and
   enable **Allow GitHub Actions to create and approve pull requests** in the
   repository's [Actions settings](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository).
 
-Declare `permissions` in the calling workflow, either at the workflow level or
-on the job using this action.
+- Set repository variables `AUTO_ASSIGNEES` and `AUTO_REVIEWERS` to
+  comma-separated GitHub usernames for the generated pull request.
 
-Optionally set repository variables `AUTO_ASSIGNEES` and `AUTO_REVIEWERS` to
-comma-separated GitHub usernames for the generated pull request.
 
 ## Example
 
