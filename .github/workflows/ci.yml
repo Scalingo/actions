@@ -62,7 +62,7 @@ jobs:
   go-tests-root-module-with-extra-setup:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Set up root Go module and extra setup script
         run: |
@@ -84,7 +84,7 @@ jobs:
   go-tests-nested-module-with-extra-setup:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Set up nested Go module and extra setup script
         run: |
@@ -107,7 +107,7 @@ jobs:
   go-tests-nested-module-with-failing-root-extra-setup:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Set up nested Go module and failing root extra setup script
         run: |
@@ -128,7 +128,7 @@ jobs:
   go-tests-nested-module-with-root-and-nested-extra-setup:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Set up nested Go module with root and nested extra setup scripts
         run: |
