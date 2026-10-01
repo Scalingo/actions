@@ -43,6 +43,16 @@ no new pull request is created when there are no changes.
   If omitted or absent from `major_versions`, defaults to the highest requested
   major.
 
+- `pr_assignees` (opt):\
+  Comma or newline-separated list of GitHub usernames to assign to the pull
+  request.\
+  If omitted, no assignees are specified.
+
+- `pr_reviewers` (opt):\
+  Comma or newline-separated list of GitHub usernames to request a pull request
+  review from.\
+  If omitted, no reviewers are specified.
+
 
 ## Instructions
 
@@ -96,9 +106,7 @@ jobs:
           repository: keycloak/keycloak
           inventory_file: INVENTORY.tsv
           major_versions: "25 26"
-          default_major: "25"
+          default_major: "26"
+          pr_assignees: "${{ vars.AUTO_ASSIGNEES }}"
+          pr_reviewers: "${{ vars.AUTO_REVIEWERS }}"
 ```
-
-This checks for Keycloak releases in majors 25 and 26 and marks the newest
-inventory entry in major 25 as the default. Omit `default_major` to use major 26
-instead. The pull request is created in the repository running the workflow.

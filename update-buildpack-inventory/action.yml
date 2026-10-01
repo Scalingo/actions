@@ -34,6 +34,18 @@ inputs:
     required: false
     default: ""
 
+  pr_assignees:
+    description: |
+      Comma or newline-separated list of GitHub usernames to assign to the pull
+      request.
+    required: false
+
+  pr_reviewers:
+    description: |
+      Comma or newline-separated list of GitHub usernames to request a pull
+      request review from.
+    required: false
+
 runs:
   using: "composite"
   steps:
@@ -81,5 +93,5 @@ runs:
           This is an automated pull-request to update the inventory.
         commit-message: "chore(inventory): auto-update inventory"
         sign-commits: true
-        assignees: Frzk
-        reviewers: Frzk
+        assignees: ${{ inputs.pr_assignees }}
+        reviewers: ${{ inputs.pr_reviewers }}
