@@ -66,9 +66,6 @@ no new pull request is created when there are no changes.
   enable **Allow GitHub Actions to create and approve pull requests** in the
   repository's [Actions settings](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository).
 
-- Set repository variables `AUTO_ASSIGNEES` and `AUTO_REVIEWERS` to
-  comma-separated GitHub usernames for the generated pull request.
-
 
 ## Example
 
@@ -86,7 +83,7 @@ on:
 
 jobs:
   update-inventory:
-    runs-on: ubuntu-26
+    runs-on: ubuntu-26.04
     permissions:
       contents: write
       pull-requests: write
