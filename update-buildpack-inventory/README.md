@@ -11,7 +11,10 @@ version, download URL, and digest supplied by GitHub.
 The inventory is updated in the repository running the workflow, where the
 pull request is also created. The release source can be a different repository.
 
-Existing versions are kept without updating their URL or checksum. The inventory
+Existing versions retain their URL and checksum. When `releases_limit` is set,
+only the newest N releases per requested major are kept, including existing
+entries. Without a limit, all matching releases are added and existing entries
+are kept. The inventory
 is sorted by version, newest first, and the newest entry in the selected default
 major is marked `default`. If that major has no inventory entry, no entry is
 marked as default.
@@ -34,9 +37,14 @@ no new pull request is created when there are no changes.
 - `major_versions` (req):\
   Major versions to consider, separated by single spaces, for example
   `"16 17 18"`.\
-  It only controls which releases are added. It does not remove existing
-  entries from other major versions.\
+  Controls which releases are added and which majors `releases_limit` applies
+  to. Existing entries from other major versions are kept.\
   Must be nonempty.
+
+- `releases_limit` (opt):\
+  Maximum number of releases to retain per requested major version, newest
+  first. Must be a positive integer, for example `"3"`.\
+  If omitted, all releases are kept.
 
 - `default_major` (opt):\
   Major whose newest inventory entry becomes the default.\
@@ -106,6 +114,7 @@ jobs:
           repository: keycloak/keycloak
           inventory_file: INVENTORY.tsv
           major_versions: "25 26"
+          releases_limit: 3
           default_major: "26"
           pr_assignees: "${{ vars.AUTO_ASSIGNEES }}"
           pr_reviewers: "${{ vars.AUTO_REVIEWERS }}"

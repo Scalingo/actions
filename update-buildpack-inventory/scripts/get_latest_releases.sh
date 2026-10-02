@@ -38,23 +38,12 @@ gh api "repos/${REPOSITORY}/releases" --paginate \
 			| select($majors | index($major))
 
 			# Reduce the GitHub release object to the fields needed below.
-			# Keep the parsed version components temporarily so we can select
-			# the newest release for each major version.
 			| {
 				major: $major,
 				version: $version,
-				version_parts: $version_parts,
 				assets: $release.assets
 			}
 		)
-
-		# Group releases by major version, then select the highest semantic
-		# version in each group.
-		#
-		# Using max_by(version_parts) means this does not depend on the order
-		# in which the GitHub API returned the releases.
-		| group_by(.major)
-		| map(max_by(.version_parts))
 
 		# Process each selected release individually.
 		| .[]

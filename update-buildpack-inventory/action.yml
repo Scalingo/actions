@@ -25,6 +25,12 @@ inputs:
     required: true
     default: ""
 
+  releases_limit:
+    description: |
+      Maximum number of releases to retain per requested major version.
+      Must be a positive integer. If omitted, all releases are kept.
+    required: false
+
   default_major:
     description: |
       When major versions has multiple values, allows to specify which one
@@ -78,6 +84,7 @@ runs:
         INVENTORY: ${{ inputs.inventory_file }}
         MAJORS: ${{ inputs.major_versions }}
         DEFAULT_MAJOR: ${{ inputs.default_major }}
+        RELEASES_LIMIT: ${{ inputs.releases_limit }}
         RELEASES_FILE: ${{ steps.releases_file.outputs.file }}
       run: |
         "${GITHUB_ACTION_PATH}/scripts/update_buildpack_inventory.sh" < "${RELEASES_FILE}"
