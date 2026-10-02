@@ -114,7 +114,7 @@ jobs:
           repository: keycloak/keycloak
           inventory_file: INVENTORY.tsv
           major_versions: "25 26"
-          releases_limit: "3"
+          releases_limit: 3
           default_major: "26"
           pr_assignees: "${{ vars.AUTO_ASSIGNEES }}"
           pr_reviewers: "${{ vars.AUTO_REVIEWERS }}"
