@@ -4,6 +4,11 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+if [[ -n "${RELEASES_LIMIT:-}" && ! "${RELEASES_LIMIT}" =~ ^[1-9][0-9]*$ ]]; then
+	printf 'RELEASES_LIMIT must be a positive integer.\n' >&2
+	exit 1
+fi
+
 # Use temporary file so a writing failure doesn't corrupt the inventory.
 # We use atomic operation (e.g. `mv`) to create the updated inventory file.
 tmp_inventory=""
@@ -69,12 +74,12 @@ inventory::check_and_add_new_releases() {
 
 inventory::sort() {
 #
-# Sorts the inventory by version number.
-# Sorting order defaults to DESC.
+# Reads the inventory from stdin and prints it sorted by version to stdout.
+# Preserves the header. The optional first argument defaults to DESC.
 #
 
-	local inventory="${1}"
-	local sort_order="${2:-"DESC"}"
+	local sort_order="${1:-"DESC"}"
+	local header
 	local opts=()
 
 	# The case statement makes it explicit we only accept "ASC" or "DESC"
@@ -93,37 +98,24 @@ inventory::sort() {
 			;;
 	esac
 
-	# Prints inventory header
-	head --lines=1 -- "${inventory}"
+	# Read only the header, leaving the remaining stdin for sort.
+	IFS= read -r header || [[ -n "${header}" ]] || return 0
+	printf '%s\n' "${header}"
 
-	# Skips the first line (header), and sorts the remaining lines:
-	tail --lines=+2 -- "${inventory}" \
-		| sort --field-separator=$'\t' --key=1,1 --version-sort "${opts[@]}"
+	sort --field-separator=$'\t' --key=1,1 --version-sort "${opts[@]}"
 }
 
-inventory::remove_empty_lines() (
+inventory::remove_empty_lines() {
 #
-# /!\
-# This function is written between parentheses!
-# Parentheses run this function in a subshell, isolating its EXIT trap from
-# the script's cleanup trap. The temporary file is removed when the subshell
-# exits, while the local tmp variable is still available.
+# Reads stdin and removes empty lines and lines containing only whitespace
+# or non-printable characters. The result is printed on stdout.
 #
-# Removes completely empty lines, and lines containing only
-# control/non-printable characters such as \r, tabs, NULs, whitespaces, etc.
-#
-
-	local file="${1}"
-	local tmp
-
-	tmp="$( mktemp )" || return 1
-	# Make sure we cleanup after ourselves:
-	trap 'rm --force -- "${tmp}"' EXIT
+	local status
 
 	# Treat NUL-containing input as text. Keep lines containing at least
-    # one printable, non-whitespace character.
-	if LC_ALL=C grep --text '[[:graph:]]' -- "${file}" > "${tmp}"; then
-		:
+	# one printable, non-whitespace character.
+	if LC_ALL=C grep --text '[[:graph:]]'; then
+		return 0
 	else
 		status="${?}"
 		# Status 1 means no matching lines, which is OK.
@@ -132,8 +124,59 @@ inventory::remove_empty_lines() (
 			return "${status}"
 		fi
 	fi
+}
 
-	cat -- "${tmp}" > "${file}"
+inventory::limit_releases() (
+#
+# /!\
+# This function is written between parentheses!
+# Parentheses run this function in a subshell, isolating its EXIT trap from
+# the script's cleanup trap.
+# The temporary files are removed when the subshell exits.
+#
+# Reads the inventory from stdin, and keeps the newest N entries for each
+# requested major version.
+# Preserves the header and keep only requested major versions.
+#
+# The updated inventory is printed on stdout.
+#
+
+	local limit="${1:-}"
+	local inventory=""
+	local major_file=""
+	local major
+	local status
+
+	# Use a subshell to keep this cleanup separate from the script's EXIT trap.
+	trap 'rm --force -- "${inventory}" "${major_file}"' EXIT
+	inventory="$( mktemp )" || return 1
+	major_file="$( mktemp )" || return 1
+
+	# Buffer stdin in $inventory so each requested major can read the complete
+	# inventory
+	cat > "${inventory}" || return 1
+
+	head --lines 1 -- "${inventory}"
+
+	for major in ${MAJORS}; do
+		# grep returns 1 when this major has no entries.
+		# Put all rows for this major aside:
+		if grep --extended-regexp "^${major}\." "${inventory}" \
+			> "${major_file}"
+		then
+			if [[ -n "${limit:-}" ]]; then
+				# Limit to $limit releases for this major:
+				head --lines "${limit}" -- "${major_file}"
+			else
+				# No limit:
+				cat -- "${major_file}"
+			fi
+		else
+			# Return if grep failed:
+			status=$?
+			(( status == 1 )) || return "${status}"
+		fi
+	done
 )
 
 inventory::set_default_version() {
@@ -187,14 +230,15 @@ inventory::set_default_version() {
 # If $DEFAULT_MAJOR is not set, or if its value is not in $MAJORS, the highest
 # value of $MAJORS is considered as the default one.
 
-# Get the list of allowed major versions, sorted descending:
-major_versions="$( printf '%s\n' "${MAJORS:-}" \
+# Normalize MAJORS to one value per line, sorted descending without duplicates.
+MAJORS="$( printf '%s\n' "${MAJORS:-}" \
 					| tr --squeeze-repeats '[:space:]' '\n' \
-					| sort --version-sort --reverse )"
+					| inventory::remove_empty_lines \
+					| sort --version-sort --reverse --unique )"
 
 # In last resort, the default major version is the highest available.
-# Since $major_versions is sorted descending, it's the first value:
-default_major="${major_versions%%$'\n'*}"
+# Since $MAJORS is sorted descending, it's the first value:
+default_major="${MAJORS%%$'\n'*}"
 
 # Accept DEFAULT_MAJOR only when it matches a value set in MAJORS:
 while IFS= read -r major; do
@@ -202,10 +246,10 @@ while IFS= read -r major; do
 		default_major="${major}"
 		break
 	fi
-done <<< "${major_versions}"
+done <<< "${MAJORS}"
 
 
-if [[ ! -f "${INVENTORY}" ]]; then
+if [[ ! -s "${INVENTORY}" ]]; then
 	# Create inventory file:
 	printf '%s\t%s\t%s\t%s\n' \
 		"Version" "URL" "Checksum" "Default?" > "${INVENTORY}"
@@ -223,13 +267,12 @@ fi
 # Check for new releases:
 inventory::check_and_add_new_releases
 
-# Removes empty lines from the file:
-inventory::remove_empty_lines "${tmp_inventory}"
-
 # Build and replace the final inventory:
-inventory::sort "${tmp_inventory}" "DESC" \
+inventory::sort "DESC" < "${tmp_inventory}" \
+	| inventory::remove_empty_lines \
+	| inventory::limit_releases "${RELEASES_LIMIT:-}" \
 	| inventory::set_default_version "${default_major}" > "${new_inventory}"
 
 # Move updated inventory back in place, preserve orginal permissions:
-chmod u+r -- "${new_inventory}"
+chmod 0644 -- "${new_inventory}"
 mv -- "${new_inventory}" "${INVENTORY}"
