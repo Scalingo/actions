@@ -5,17 +5,18 @@ set -o nounset
 set -o pipefail
 
 gh api "repos/${REPOSITORY}/releases" --paginate \
-	| jq --raw-output --arg majors "${MAJORS}" '
+	| jq --raw-output --arg series "${SERIES}" '
 		#
-		# Convert the space-separated MAJORS string into a jq array.
-		# Example: "16 17 18" -> ["16", "17", "18"]
-		($majors | split(" ")) as $majors
+		# Accept major or major.minor selectors, optionally ending in .x.
+		# Match numeric components, so 13.1 never matches 13.10.
+		($series | [scan("\\S+") | sub("\\.x$"; "")
+			| split(".") | map(tonumber)]) as $series
 
 		# Keep only final releases:
 		# exclude drafts and prereleases
 		| map(select(.draft == false and .prerelease == false))
 
-		# Normalize each release and keep only the requested major versions.
+		# Normalize each release and keep only the requested version series.
 		| map(
 			# Keep a reference to the original GitHub release object.
 			. as $release
@@ -24,50 +25,20 @@ gh api "repos/${REPOSITORY}/releases" --paginate \
 			# Example: "v17.3.1" -> "17.3.1"
 			| ($release.tag_name | sub("^v"; "")) as $version
 
-			# Parse the version into numeric components so versions can be
-			# compared numerically rather than lexicographically.
-			# Example: "17.10.2" -> [17, 10, 2]
-			| ($version | split(".") | map(tonumber)) as $version_parts
+			# Match using the numeric base, keeping the full version for output.
+			# Extract major.minor.patch regardless of the suffix separator.
+			# Example: "11.0.0-preview" -> [11, 0, 0]
+			# Tags without a numeric major.minor.patch prefix are ignored.
+			| ($version | match("^[0-9]+\\.[0-9]+\\.[0-9]+")
+				| .string | split(".") | map(tonumber)) as $version_parts
 
-			# Extract the major version number as a string, matching the
-			# representation used by MAJORS.
-			# Example: "17.3.1" -> "17"
-			| ($version_parts[0] | tostring) as $major
+			# Keep releases matching any requested version prefix.
+			| select(any($series[]; . as $prefix
+				| $version_parts[:($prefix | length)] == $prefix))
 
-			# Ignore releases whose major version is not in MAJORS.
-			| select($majors | index($major))
-
-			# Reduce the GitHub release object to the fields needed below.
-			| {
-				major: $major,
-				version: $version,
-				assets: $release.assets
-			}
+			| $version
 		)
 
-		# Process each selected release individually.
+		# Emit one full version per line for the inventory updater.
 		| .[]
-
-		# Save the release object because the next step switches the current
-		# input (`.`) to one of its assets.
-		| . as $release
-
-		# Iterate over all assets attached to this GitHub release.
-		| .assets[]
-
-		# Keep only .tar.gz archives.
-		| select(.name | test("\\.tar\\.gz$"))
-
-		# Produce three output columns:
-		#   1. release version
-		#   2. asset download URL
-		#   3. SHA-256 digest, with the "sha256:" prefix
-		| [
-			$release.version,
-			.browser_download_url,
-			.digest
-		]
-
-		# Render the array above as a tab-separated line.
-		| @tsv
 	'
