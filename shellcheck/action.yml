@@ -62,6 +62,7 @@ runs:
         docker run --rm \
             --env FILES \
             --env SEVERITY \
+            --env ALL_CHECKS \
             --volume "${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE}:ro" \
             --volume "${GITHUB_ACTION_PATH}:${GITHUB_ACTION_PATH}:ro" \
             --workdir "${GITHUB_WORKSPACE}" \
