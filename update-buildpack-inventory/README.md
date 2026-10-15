@@ -14,12 +14,10 @@ does not mark the release as a draft or prerelease.
 The required `download_url` template allows to build archive URLs from release
 versions. The action also downloads archives to calculate SHA-256 checksums.
 
-The base version is the numeric `major.minor.patch` prefix; suffixes such as
-`-preview`, `+security-02`, and `.revision-2` all belong to that same base.
-
-Only the newest revision of each base version is kept: `13.0.1+security-02`
-replaces `13.0.1+security-01` and `13.0.1`, while `13.0.2` remains a separate
-entry.
+The inventory keeps the newest entry only for each base version
+(`major.minor.patch`). For example, if `13.0.1`, `13.0.1+security-01`, and
+`13.0.1+security-02` are available, only `13.0.1+security-02` is kept. Version
+`13.0.2` has a different base version, so it is kept as a separate entry.
 
 The full version string is preserved in the inventory. Revisions are ordered
 using GNU version sort, and superseded entries are removed before applying
