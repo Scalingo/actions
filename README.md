@@ -162,44 +162,9 @@ To lint only changed files, pass the changed-file list with one path per line:
 
 ## ShellCheck
 
-The ShellCheck Github action allows to run ShellCheck on a repository.
+Allows to run ShellCheck on a repository.\
+[More](shellcheck/README.md)
 
-Available inputs:
-
-- `version` (opt):\
-  Allows to specify the version of ShellCheck to use.\
-  Must be a valid [Docker Hub release tag](https://hub.docker.com/r/koalaman/shellcheck/tags).\
-  Defaults to `v0.11.0`
-
-- `severity` (opt):\
-  Allows to specify the minimum severity of errors to consider.\
-  Valid values in order of severity are: `error`, `warning`, `info` and
-  `style`.\
-  Defaults to `style`.
-
-- `files` (opt):\
-  Allows to specify the path to the files to scan.\
-  Paths must be given relative to the repository root directory.\
-  They must be seperated by a newline.\
-  Defaults to all `.sh` files in the repository, except those in the `.git`
-  directory.
-
-Here is an example:
-
-```yaml
-jobs:
-  shellcheck:
-    name: "ShellCheck"
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: Scalingo/actions/shellcheck@main
-        with:
-          severity: style
-          files: |
-            first_file.sh
-            second/*.sh
-            third.sh
-```
 
 ## Update Buildpack Inventory
 
