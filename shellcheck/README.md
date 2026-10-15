@@ -69,7 +69,7 @@ jobs:
         with:
           version: v0.11.0
           severity: style
-          enable_all_checks: "true"
+          enable_all_checks: true
           files: |
             first_file.sh
             second/*.sh
