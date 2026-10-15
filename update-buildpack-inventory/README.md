@@ -35,7 +35,7 @@ selected default series is marked `default`. If that default series has no
 inventory entry, no entry is marked as default.
 
 Changes are proposed through the `feat/inventory/auto_update` branch with the
-pull request title `chore(inventory) auto-update inventory`. An existing pull
+pull request title `chore(inventory): auto-update inventory`. An existing pull
 request is updated; no new pull request is created when there are no changes.
 
 
