@@ -41,8 +41,10 @@ inputs:
   enable_all_checks:
     description: |
       When set to 'true', instructs ShellCheck to run all tests it knows, even
-      optional ones that are not enabled by default. Equivalent to running with
-      the `--enable=all` flag.
+      optional ones that are not enabled by default.
+      Run `shellcheck --list-optional` for the list of optional checks that are
+      disabled by default.
+      Equivalent to running with the `--enable=all` flag.
     required: false
     default: "false"
 
