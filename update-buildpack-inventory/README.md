@@ -99,39 +99,6 @@ request is updated; no new pull request is created when there are no changes.
   If omitted, no reviewers are specified.
 
 
-## Instructions
-
-- `scripts/get_latest_releases.sh` reads `REPOSITORY` and `SERIES` and prints
-  one version per line. `scripts/update_buildpack_inventory.sh` reads those
-  versions from stdin, builds URLs from `DOWNLOAD_URL`, calculates checksums,
-  and writes the four-column inventory.
-
-- Use a Linux runner with Bash, GNU command-line utilities, Git, GitHub CLI
-  (`gh`), `jq`, `curl`, and `sha256sum` available. Downloads follow redirects
-  and have a ten-minute timeout.
-
-- Release tags must start with numeric `major.minor.patch`, optionally
-  prefixed with `v` and followed by any suffix, such as
-  `17.3.1`, `v11.0.0-preview`, or `13.0.1+security-02`.
-  Tags without this numeric prefix are ignored. Only the numeric base is used
-  to match `version_series`.
-
-- GitHub supplies versions only. The archive bytes are streamed through
-  `sha256sum`; no archive is retained on disk. HTTP errors, connection
-  failures, and incomplete downloads produce a `FIXME` rather than a checksum
-  of an error response or partial archive.
-
-- Set `GH_TOKEN` for [GitHub CLI authentication](https://cli.github.com/manual/gh_auth_login).
-  The example below uses the workflow's token to read releases from a public
-  repository. For a private release source, provide a token with access to it.
-
-- Declare `permissions` in the calling workflow, either at the workflow level
-  or on the job using this action.\
-  Grant the calling workflow `contents: write` and `pull-requests: write`, and
-  enable **Allow GitHub Actions to create and approve pull requests** in the
-  repository's [Actions settings](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository).
-
-
 ## Example
 
 ```yaml
