@@ -32,9 +32,9 @@ severity or higher, or encounters an error.
   directory.
 
 - `enable_all_checks` (opt):\
-  Set to `"true"` to enable all optional ShellCheck checks, equivalent to
+  Set to `true` to enable all optional ShellCheck checks, equivalent to
   `--enable=all`.\
-  Defaults to `"false"`.
+  Defaults to `false`.
 
 
 ## Instructions
