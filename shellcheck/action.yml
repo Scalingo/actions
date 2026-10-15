@@ -46,7 +46,7 @@ inputs:
       disabled by default.
       Equivalent to running with the `--enable=all` flag.
     required: false
-    default: "false"
+    default: false
 
 runs:
   using: "composite"
