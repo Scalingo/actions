@@ -83,7 +83,7 @@ request is updated; no new pull request is created when there are no changes.
 - `inventory_file` (opt):\
   Path to the inventory file, relative to `GITHUB_WORKSPACE`.\
   The inventory file is created if it doesn't exist.\
-  Existing nonempty files must be TSV files with a header row and four columns
+  Existing nonempty files must be Tab-Separated Values (TSV) files with a header row and four columns
   in this order: `Version`, `URL`, `Checksum`, `Default?`. The first row is
   always treated as the header and replaced when the inventory is updated.\
   Defaults to `INVENTORY.tsv`.
