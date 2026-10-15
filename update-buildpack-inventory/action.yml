@@ -18,27 +18,34 @@ inputs:
     required: false
     default: INVENTORY.tsv
 
-  major_versions:
+  version_series:
     description: |
-      Space separated list of major versions to consider.
-      This allows to handle multiple major versions in the same inventory file.
+      Space separated list of major or major.minor versions to consider.
+      For example: "13.2 13.1 13.0 12.4". An optional .x suffix is accepted.
     required: true
+    default: ""
+
+  default_series:
+    description: |
+      Requested major or major.minor version whose newest release is the
+      default.
+      Defaults to the highest value of `version_series` when no set or when set
+      to a version that doesn't exist in `version_series`.
+    required: false
     default: ""
 
   releases_limit:
     description: |
-      Maximum number of releases to retain per requested major version.
+      Maximum number of releases to retain per requested version series.
       Must be a positive integer. If omitted, all releases are kept.
     required: false
 
-  default_major:
+  download_url:
     description: |
-      When major versions has multiple values, allows to specify which one
-      must be considered as the defaultable one.
-      Defaults to the highest value of `major_versions` when no set or when set
-      to a version that doesn't exist in `major_versions`.
-    required: false
-    default: ""
+      Archive URL template. Every {version} is replaced with the release
+      version without its leading v. Archives are downloaded to calculate SHA-256;
+      failed downloads produce FIXME checksums.
+    required: true
 
   pr_assignees:
     description: |
@@ -67,12 +74,12 @@ runs:
         releases_file="$( mktemp "${RUNNER_TEMP}/releases.XXXXXX" )"
         printf 'file=%s\n' "${releases_file}" >> "${GITHUB_OUTPUT}"
 
-    - name: Get Latest Major Releases
+    - name: Get Latest Releases for Requested Series
       id: releases
       shell: bash
       env:
         REPOSITORY: ${{ inputs.repository }}
-        MAJORS: ${{ inputs.major_versions }}
+        SERIES: ${{ inputs.version_series }}
         RELEASES_FILE: ${{ steps.releases_file.outputs.file }}
       run: |
         "${GITHUB_ACTION_PATH}/scripts/get_latest_releases.sh" > "${RELEASES_FILE}"
@@ -82,8 +89,9 @@ runs:
       shell: bash
       env:
         INVENTORY: ${{ inputs.inventory_file }}
-        MAJORS: ${{ inputs.major_versions }}
-        DEFAULT_MAJOR: ${{ inputs.default_major }}
+        DOWNLOAD_URL: ${{ inputs.download_url }}
+        SERIES: ${{ inputs.version_series }}
+        DEFAULT_SERIES: ${{ inputs.default_series }}
         RELEASES_LIMIT: ${{ inputs.releases_limit }}
         RELEASES_FILE: ${{ steps.releases_file.outputs.file }}
       run: |
