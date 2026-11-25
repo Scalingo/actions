@@ -26,7 +26,7 @@ jobs:
           - <option_name>: true
 ```
 
-The calling repository can customize the unit tests environment by adding a script `bin/scalingo-ci-extra-setup.sh` that is executed before the unit tests execution.
+The calling repository can customize Go CI by adding `bin/scalingo-ci-extra-linter.sh`, which runs before linting, and/or `bin/scalingo-ci-extra-setup.sh`, which runs before unit tests.
 
 ## Ruby Continuous Integration
 

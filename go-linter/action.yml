@@ -27,6 +27,13 @@ runs:
         check-latest: true
         cache-dependency-path: "${{ inputs.working-directory }}/go.sum"
 
+    # Execute the repository's optional Go linter setup script when present
+    - name: "Execute extra linter setup step"
+      if: ${{ hashFiles(format('{0}/bin/scalingo-ci-extra-linter.sh', inputs.working-directory)) != '' }}
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: bin/scalingo-ci-extra-linter.sh
+
     # Execute the `lint-go-version` script
     - name: Download the lint-go-version script
       shell: bash

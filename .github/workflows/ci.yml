@@ -173,6 +173,40 @@ jobs:
         with:
           working-directory: test/go-linter
 
+  go-linter-with-extra-script:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Run Go lint action
+        uses: ./go-linter
+        with:
+          working-directory: test/go-linter/with-extra-script
+
+      - name: Verify the extra linter script ran
+        run: test -f test/go-linter/with-extra-script/.scalingo-ci-extra-linter-ran
+
+  go-linter-with-failing-extra-script:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Run Go lint action with a failing extra script
+        id: go_linter
+        continue-on-error: true
+        uses: ./go-linter
+        env:
+          SCALINGO_GO_LINTER_EXTRA_SCRIPT_FAIL: "true"
+        with:
+          working-directory: test/go-linter/with-extra-script
+
+      - name: Verify the extra linter script failure stops the action
+        env:
+          ACTION_OUTCOME: ${{ steps.go_linter.outcome }}
+        run: |
+          test "$ACTION_OUTCOME" = failure
+          test -f test/go-linter/with-extra-script/.scalingo-ci-extra-linter-ran
+
   ansible-linter:
     runs-on: ubuntu-24.04
     steps:
