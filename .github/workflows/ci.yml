@@ -9,7 +9,7 @@ jobs:
   go-tests-without-databases:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup the tests
         run: ./test/go-tests/setup.sh
@@ -28,7 +28,7 @@ jobs:
   go-tests-with-databases:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup the tests
         run: ./test/go-tests/setup.sh
@@ -47,7 +47,7 @@ jobs:
   go-tests-mongodb-auto:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup the tests
         run: ./test/go-tests/setup.sh
@@ -62,7 +62,7 @@ jobs:
   go-tests-root-module-with-extra-setup:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up root Go module and extra setup script
         run: |
@@ -84,7 +84,7 @@ jobs:
   go-tests-nested-module-with-extra-setup:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up nested Go module and extra setup script
         run: |
@@ -107,7 +107,7 @@ jobs:
   go-tests-nested-module-with-failing-root-extra-setup:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up nested Go module and failing root extra setup script
         run: |
@@ -128,7 +128,7 @@ jobs:
   go-tests-nested-module-with-root-and-nested-extra-setup:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up nested Go module with root and nested extra setup scripts
         run: |
@@ -152,7 +152,7 @@ jobs:
   js-linter-test:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup the tests
         run: ./test/js-linter/setup.sh
@@ -166,17 +166,51 @@ jobs:
   go-linter:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Run Go lint action
         uses: ./go-linter
         with:
           working-directory: test/go-linter
 
+  go-linter-with-extra-script:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Run Go lint action
+        uses: ./go-linter
+        with:
+          working-directory: test/go-linter/with-extra-script
+
+      - name: Verify the extra linter script ran
+        run: test -f test/go-linter/with-extra-script/.scalingo-ci-extra-linter-ran
+
+  go-linter-with-failing-extra-script:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Run Go lint action with a failing extra script
+        id: go_linter
+        continue-on-error: true
+        uses: ./go-linter
+        env:
+          SCALINGO_GO_LINTER_EXTRA_SCRIPT_FAIL: "true"
+        with:
+          working-directory: test/go-linter/with-extra-script
+
+      - name: Verify the extra linter script failure stops the action
+        env:
+          ACTION_OUTCOME: ${{ steps.go_linter.outcome }}
+        run: |
+          test "$ACTION_OUTCOME" = failure
+          test -f test/go-linter/with-extra-script/.scalingo-ci-extra-linter-ran
+
   ansible-linter:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Run Ansible lint action
         uses: ./ansible-linter
@@ -203,7 +237,7 @@ jobs:
   shellcheck:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Test the ShellCheck action
         run: ./test/shellcheck/execution.sh
